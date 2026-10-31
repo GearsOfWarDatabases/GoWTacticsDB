@@ -1,0 +1,17 @@
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no" />
+  <meta name="description" content="{{ site.description }}" />
+
+  {% capture page_title %}{% if page.title %}{{ page.title }} | {{ site.title }}{% else %}{{ site.title }} - {{ site.tagline }}{% endif %}{% endcapture %}
+  <title>{{ page_title | strip }}</title>
+
+  <meta property="og:title" content="{{ page_title | strip }}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:description" content="{{ site.tagline }}" />
+  <meta property="og:url" content="{{ page.url | absolute_url }}" />
+
+  <link rel="canonical" href="{{ page.url | absolute_url }}" />
+  <link rel="stylesheet" href="{{ '/styles/main.css' | relative_url }}" />
+  <link rel="icon" href="{{ '/favicon.ico' | relative_url }}" type="image/x-icon" />
+</head>

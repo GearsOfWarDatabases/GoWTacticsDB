@@ -1,0 +1,12 @@
+# ── Maps ───────────────────────────────────────────────────────────────────
+# Shown by maps/index.html (group_by: mode). Images: images/maps/<slug>.jpg.
+# EXAMPLE ENTRIES: replace them with your game's.
+
+groups:
+  - { key: versus, title: "Versus" }
+  - { key: horde,  title: "Horde" }
+
+list:
+  - { name: "Dam",       slug: "dam",       mode: "versus" }
+  - { name: "Forge",     slug: "forge",     mode: "versus" }
+  - { name: "Clocktower", slug: "clocktower", mode: "horde" }

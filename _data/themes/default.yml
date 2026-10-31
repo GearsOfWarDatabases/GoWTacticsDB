@@ -1,0 +1,55 @@
+# Default site theme - COG Gold/Bronze. Matches $color-cog-red / $color-cog-red-dark
+# in _sass/variables.scss (kept as the compile-time fallback for these same
+# values - see that file's comment for why the variable names still say "red").
+name: Default
+accent: "#8c6d12"
+accent_dark: "#644c0a"
+
+# Everything below (categories/rarity/traits) is identical across all 5
+# shipped themes - matches what the site has always shown, so picking any of
+# them doesn't change class category colors, card rarity colors, or trait
+# badge colors today. They're only here because the system is fully
+# theme-driven: a NEW theme (or hand-edited copy of this one) can override
+# any of these to actually change that. See README.md for the full schema
+# and what each field feeds.
+categories:
+  assault:     { color: "#c62b0f", dark: "#6d1303" }
+  tank:        { color: "#4995ff", dark: "#275ca5" }
+  support:     { color: "#2fb740", dark: "#135e1d" }
+  promotional: { color: "#d856d5", dark: "#7f2c7d" }
+
+rarity:
+  common: "#9e9e9e"
+  uncommon: "#4adb88"
+  rare: "#4a9eff"
+  epic: "#b44aff"
+  legendary: "#d4a017"
+
+# "This makes something better/worse/neither" - price modifiers (Fabricator's
+# kw--cheap/kw--expensive/kw--value), the Class Discount/Difficulty Modifier
+# chips' positive/negative/neutral states, invalid-input flashes, danger
+# buttons, Health Perk pip states. Deliberately its own group, separate from
+# `accent` - "negative" needs to stay recognizably red-ish no matter which
+# theme is active, not follow the site's brand color.
+semantic:
+  positive: "#7ee787"
+  negative: "#f54747"
+  neutral: "#d4a017"
+
+# `base` is optional per trait - omit it and it just reuses `color`. Only
+# specify both when the badge's readable text color should be visibly
+# lighter than the more saturated tone used for its background/border tint
+# (see README.md).
+traits:
+  default:                     { color: "#d4a017", base: "#c5a035" }
+  repairing:                   { color: "#d9944f" }
+  ammo-regeneration:           { color: "#8ecbff", base: "#4a9eff" }
+  explosive-ammo-regeneration: { color: "#ffb066", base: "#ff8c28" }
+  bleeding:                    { color: "#ff8f8f", base: "#dc3232" }
+  invisibility:                { color: "#d9a8ff", base: "#b44aff" }
+  marking:                     { color: "#f2c94c" }
+  freeze:                      { color: "#5fd4e0" }
+  shield:                      { color: "#a9bdd6" }
+  summon:                      { color: "#9f8cf0" }
+  melee:                       { color: "#c98a4b" }
+  stim:                        { color: "#4fdba0" }

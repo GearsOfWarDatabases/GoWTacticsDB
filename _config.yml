@@ -1,0 +1,81 @@
+# ── Your game ──────────────────────────────────────────────────────────────
+# Change this block first: the site's name, header logo, footer disclaimer, home page and page titles all come
+# from it. Example values are for Gears of War 4; GoW5DB, the first site made from this, is Gears 5.
+game:
+  name: "Gears of War 4"            # header logo and home page: "<name> Database"
+  released: "11 October 2016"
+  developer: "The Coalition"        # footer: "fan project, not affiliated with <developer> or <publisher>"
+  publisher: "Xbox Game Studios"
+
+title: "Gears of War 4 Database"
+short_name: "GoW4DB"                # also names the browser storage keys (theme, layouts)
+description: "Gears of War 4 reference: characters, weapons, maps, game modes and enemies."
+tagline: "Everything Gears of War 4. One place."
+
+url: ""
+baseurl: ""  # leave empty: the deploy workflow sets /<repo-name> on GitHub Pages builds
+
+# Shown under the tagline on the home page; empty hides it
+work_in_progress: "Many things are still to be added and polished here."
+# An issue, project board or page listing what's left; shows "See the TODO list" after the note above. Empty: no link.
+todo_url: ""
+
+# Who made it, shown on the home page. Remove either block (or both) to hide it.
+credits:
+  xbox:
+    gamertag: "YourGamertag#1234"
+    url: "https://www.xbox.com/play/user/YourGamertag1234"
+  github:
+    name: "Your Name"
+    user: "YourGitHubUser"
+    url: "https://github.com/YourGitHubUser"
+
+# Small link in the top right corner of every page; empty text hides it
+notice:
+  text: "More Gears databases at"
+  link_text: "GearsOfWarDatabases"
+  url: "https://gearsofwardatabases.github.io/"
+
+# Where the footer's revision links to when Actions doesn't say (GitHub Pages builds set it from GITHUB_REPOSITORY)
+repository_url: "https://github.com/GearsOfWarDatabases/GoW4DB"
+
+# Themes offered by the Theme button, in this order (files in _data/themes/, see its README)
+theme_order: "default"
+
+# ── Sections ───────────────────────────────────────────────────────────────
+# The navbar and the home page cards. Each url needs a page (e.g. weapons/index.html). A page with
+# `coming_soon: true` shows greyed out with a "Coming soon" tooltip. Add, remove or rename freely: see README.md.
+nav_groups:
+  - name: "Combat"
+    sections:
+      - { title: "Characters", url: "/characters/", icon: "&#128100;", desc: "Every playable character" }
+      - { title: "Weapons",    url: "/weapons/",    icon: "&#128299;", desc: "Every weapon" }
+      - { title: "Enemies",    url: "/enemies/",    icon: "&#128128;", desc: "Who you fight in Horde" }
+  - name: "World"
+    sections:
+      - { title: "Maps",       url: "/maps/",       icon: "&#128506;", desc: "Versus and Horde maps" }
+      - { title: "Gamemodes",  url: "/gamemodes/",  icon: "&#127918;", desc: "Every game mode explained" }
+  - name: "Customization"
+    sections:
+      - { title: "Executions", url: "/executions/", icon: "&#128481;", desc: "Execution moves" }
+      - { title: "Skins",      url: "/skins/",      icon: "&#127912;", desc: "Weapon and character skins" }
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+
+exclude:
+  - ref/
+  - Gemfile
+  - Gemfile.lock
+  - .bundle/
+  - vendor/
+  - "*.sh"
+  - "*README.md"   # README.md here and in images/*/
+  - LICENSE
+
+sass:
+  sass_dir: _sass
+  style: compressed

@@ -1,0 +1,1187 @@
+<footer class="site-footer">
+  <div class="site-footer__inner">
+    <span class="site-footer__copy">{{ site.title }} - fan project, not affiliated with {{ site.game.developer }} or {{ site.game.publisher }}.
+      Made with the help of <a href="https://claude.ai">Claude</a>, Anthropic's AI assistant.</span>
+    <button type="button" class="site-footer__export" id="page-export-btn"
+      title="Download this page as a single, fully self-contained HTML file - styles and images are embedded directly in it, so it keeps working with no internet connection at all.">&#128190; Export this page</button>
+  </div>
+  {%- comment %} GitHub Pages builds: the revision line that local and self-hosted builds show in the header's top
+  left corner (header.html), centered here instead. The date/time is localized by #site-header-commit-time below,
+  like the header's. {% endcomment %}
+  {%- if site.github_pages_build %}
+  {%- assign rev_time = site.last_commit_time | default: site.time %}
+  <div class="site-footer__revision">
+    <div>Hosted on <a href="https://pages.github.com/">GitHub Pages</a>.</div>
+    <div>{{ site.game.name }} - Database Revision:
+      {% if site.last_commit_hash %}
+      {% if site.repository_url and site.last_commit_sha %}
+      <a href="{{ site.repository_url }}/commit/{{ site.last_commit_sha }}"><strong>{{ site.last_commit_hash }}</strong></a>
+      {% else %}
+      <strong>{{ site.last_commit_hash }}</strong>
+      {% endif %}
+      {% endif %}
+      <span class="site-header__updated-datetime" data-commit-epoch="{{ rev_time | date: '%s' }}"
+        title="{{ rev_time | date: '%d-%m-%Y | %H:%M:%S %z' }}">{{ rev_time | date: '%d-%m-%Y | %H:%M:%S %z' }}</span>
+      {% if site.last_commit_branch %} ({{ site.last_commit_branch }} branch){% endif %}
+      {% if site.host_os %} ({{ site.host_os }}){% endif %}
+    </div>
+  </div>
+  {%- endif %}
+</footer>
+
+<script id="page-tip-badges">
+(function () {
+  'use strict';
+  // Every info/hidden/engineer badge (anything with .info-badge) already
+  // shows its tooltip on hover/focus via CSS. This adds tap-to-toggle so
+  // touch devices (which don't have real :hover) can open it too - tap the
+  // badge to show it, tap it again (or hit Escape) to close it. Multiple
+  // badges can stay open at once - opening one no longer closes the others.
+  function tipOf(badge) {
+    return badge.querySelector('.engineer-badge__tip, .hidden-badge__tip, .trait-badge__tip, .map-badge__tip, .level-badge__tip');
+  }
+  // Two badges sitting right next to each other (same card/badge row) pop
+  // their tooltips in roughly the same spot, so if both are left open they'd
+  // just cover one another. Stack them: the first-opened badge in a row
+  // keeps its normal position, every other open badge that actually
+  // OVERLAPS an already-placed one gets pushed down below it instead.
+  // Level-track nodes get the same treatment grouped by their shared
+  // .level-track (not just same-row) - the track wraps onto multiple rows
+  // on narrower screens, so two nodes that read as "different rows" can
+  // still sit close enough that one's tooltip opens right on top of another
+  // node's own circle a row down (e.g. Level 5's tooltip covering Level
+  // 15's node). Checking real overlap (rather than unconditionally stacking
+  // every open item in the group) matters here specifically because a wide
+  // level track can have many tooltips open at once that are nowhere near
+  // each other - only the ones that'd actually collide should move.
+  function rectsOverlap(a, b) {
+    return !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
+  }
+  function layoutOpenTips() {
+    var openBadges = Array.prototype.slice.call(document.querySelectorAll('.info-badge.is-open'));
+    openBadges.forEach(function (b) {
+      var tip = tipOf(b);
+      if (tip) tip.style.top = '';
+    });
+    var groups = [];
+    openBadges.forEach(function (b) {
+      var row = b.closest('.class-card-thumb__badges, .class-page__badges, .level-track');
+      var key = row || b.parentElement;
+      var group = groups.filter(function (g) { return g.key === key; })[0];
+      if (!group) { group = { key: key, items: [] }; groups.push(group); }
+      var tip = tipOf(b);
+      if (tip) group.items.push({ badge: b, tip: tip });
+    });
+    groups.forEach(function (group) {
+      if (group.items.length < 2) return;
+      var placed = [];
+      group.items.forEach(function (item) {
+        var rect = item.tip.getBoundingClientRect();
+        // Push down until clear of every already-placed tip, not just the
+        // ones that blocked this tip's ORIGINAL (pre-push) position. A
+        // single pass checking only that original rect can leave two
+        // tips that both only overlapped an earlier one - not each other
+        // - independently pushed to clear it and land in the same spot
+        // (e.g. Levels 19 and 20, both blocked only by 18, both computing
+        // nearly the same "clear of 18" offset since they share a row and
+        // so start from the same badge top) - each new candidate position
+        // has to be re-checked against everything placed so far, looping
+        // until it actually lands somewhere nothing else already claimed.
+        var guard = 0;
+        while (guard < 20) {
+          guard += 1;
+          var blocker = placed.filter(function (p) { return rectsOverlap(rect, p); })[0];
+          if (!blocker) break;
+          var badgeTop = item.badge.getBoundingClientRect().top;
+          item.tip.style.top = ((blocker.bottom + 8) - badgeTop) + 'px';
+          rect = item.tip.getBoundingClientRect();
+        }
+        placed.push(rect);
+      });
+    });
+  }
+  function closeAll(except) {
+    Array.prototype.slice.call(document.querySelectorAll('.info-badge.is-open')).forEach(function (b) {
+      if (b !== except) { b.classList.remove('is-open'); b.style.zIndex = ''; }
+    });
+    layoutOpenTips();
+  }
+  // Two badges pinned open at once (e.g. two level-track nodes close
+  // together in a wrapped row) both get the same static z-index from CSS
+  // (see .level-track__node--unlock.is-open in home.scss), so whichever one
+  // happens to sit later in the HTML wins the tie and its circle can end up
+  // covering the other's already-open tooltip - confusing regardless of
+  // which one you actually just opened. Give every newly-opened badge a
+  // fresh, always-higher z-index instead, so the one you most recently
+  // clicked is always the one on top.
+  var openZIndex = 30;
+  document.addEventListener('click', function (e) {
+    var badge = e.target.closest && e.target.closest('.info-badge');
+    if (badge) {
+      // A tooltip can contain a real cross-reference link (e.g. Jack's
+      // hidden note links to Robotics Expert). Clicking that link should
+      // navigate normally, not be swallowed by the badge toggle below.
+      var link = e.target.closest && e.target.closest('a');
+      if (link && badge.contains(link)) {
+        closeAll();
+        return;
+      }
+      badge.classList.toggle('is-open');
+      if (badge.classList.contains('is-open')) {
+        openZIndex += 1;
+        badge.style.zIndex = openZIndex;
+      } else {
+        badge.style.zIndex = '';
+      }
+      layoutOpenTips();
+      // Badges are sometimes nested inside a bigger link (e.g. the class
+      // grid cards) - stop the badge tap itself from following that link.
+      e.preventDefault();
+      e.stopPropagation();
+    } else {
+      closeAll();
+    }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeAll();
+  });
+  window.addEventListener('resize', layoutOpenTips);
+})();
+</script>
+
+<script id="page-nested-tip-fix">
+(function () {
+  'use strict';
+  // render-desc.html resolves [[slug]] cross-references recursively, so a
+  // tooltip can itself contain ANOTHER cross-reference link - e.g. Jack's
+  // Hidden trait note links to Robotics Expert, whose own class-mini-preview
+  // then pops up on hover *inside* the Hidden tooltip that's already open.
+  // Both default to opening straight down from their own trigger (see
+  // .xref-tip in main.scss), which is fine standalone - but when the inner
+  // trigger sits near the TOP of the outer tooltip's text (as "Robotics
+  // Expert" does here), "down from the trigger" lands inside the outer
+  // tooltip's own remaining body instead of clearing it, so the two
+  // visibly overlap into a garbled mess. Same fix as #page-tip-badges'
+  // layoutOpenTips just above: once the inner tooltip is showing, check
+  // whether it actually overlaps its outer tooltip ancestor's box and, if
+  // so, push it down to clear that box entirely.
+  var OUTER_SELECTOR = [
+    '.xref-tip', '.xref-card-preview', '.engineer-badge__tip',
+    '.hidden-badge__tip', '.trait-badge__tip', '.level-badge__tip',
+    '.map-badge__tip', '.class-mini-preview'
+  ].join(', ');
+  var INNER_SELECTOR = '.xref-link--tip, .xref-link--card';
+
+  function innerTip(inner) {
+    return inner.querySelector('.xref-tip, .xref-card-preview');
+  }
+
+  function fix(inner) {
+    var tip = innerTip(inner);
+    if (!tip) return;
+    var outer = inner.parentElement ? inner.parentElement.closest(OUTER_SELECTOR) : null;
+    if (!outer) return;
+    tip.style.top = '';
+    var tipRect = tip.getBoundingClientRect();
+    var outerRect = outer.getBoundingClientRect();
+    var overlaps = !(tipRect.right < outerRect.left || tipRect.left > outerRect.right ||
+                      tipRect.bottom < outerRect.top || tipRect.top > outerRect.bottom);
+    if (!overlaps) return;
+    var innerRect = inner.getBoundingClientRect();
+    tip.style.top = ((outerRect.bottom + 10) - innerRect.top) + 'px';
+  }
+
+  function clear(inner) {
+    var tip = innerTip(inner);
+    if (tip) tip.style.top = '';
+  }
+
+  Array.prototype.slice.call(document.querySelectorAll(INNER_SELECTOR)).forEach(function (inner) {
+    inner.addEventListener('mouseenter', function () { fix(inner); });
+    inner.addEventListener('focus', function () { fix(inner); });
+    inner.addEventListener('mouseleave', function () { clear(inner); });
+    inner.addEventListener('blur', function () { clear(inner); });
+  });
+})();
+</script>
+
+<script id="page-soon-tips">
+(function () {
+  'use strict';
+  // Every "coming soon" nav link/home card (.soon-tip, see home.scss) is
+  // hover/focus-only - CSS alone positions the homepage card version fine,
+  // but the navbar version needs `position: fixed` to escape .site-nav's
+  // own `overflow: hidden` (required for its collapse-on-scroll animation),
+  // and fixed-positioned tooltips don't resolve percentage offsets against
+  // their link the way absolutely-positioned ones do. This computes real
+  // on-screen pixel coordinates by hand instead, right before each one is
+  // shown, so it still lands centered under/above the link that triggered it.
+  //
+  // Only `top`/`left` are ever set here, never `bottom`/`right`. .site-header
+  // has `backdrop-filter`, which makes IT (not the viewport) the containing
+  // block for these fixed-positioned tooltips - its top-left corner lines up
+  // with the viewport's (it's a full-width sticky header pinned at top: 0),
+  // so plain getBoundingClientRect() coordinates line up correctly for
+  // `top`/`left`. `bottom` would instead need the containing block's own
+  // height (the header's, not window.innerHeight) and came out wildly wrong.
+  //
+  // Every nav tooltip opens downward below the WHOLE nav bar (not just its
+  // own link) - the header's too short for one to open upward without
+  // covering the logo, and a top-row link's own row has the bottom row
+  // sitting right underneath it with barely any gap. Anchoring to the
+  // nav's own bottom edge keeps every tooltip clear of both, while `left`
+  // still tracks the specific link so it lines up under the right column.
+  function positionTip(link) {
+    var tip = link.querySelector('.soon-tip');
+    if (!tip || getComputedStyle(tip).position !== 'fixed') return;
+    var r = link.getBoundingClientRect();
+    var nav = link.closest('.site-nav');
+    var navBottom = nav ? nav.getBoundingClientRect().bottom : r.bottom;
+    tip.style.left = (r.left + r.width / 2) + 'px';
+    tip.style.bottom = 'auto';
+    tip.style.top = (navBottom + 8) + 'px';
+  }
+
+  // Home cards default to opening upward (see .soon-tip in home.scss), which
+  // looks right for most of them - but a card in the FIRST row of its
+  // section sits right under that section's header/divider line, and an
+  // upward tooltip there overlaps it. Every first-row card is roughly the
+  // same short distance from its own .home-group's top edge (just the
+  // header's height); anything further down has a whole card's height of
+  // clearance above it instead, so that distance reliably tells the two
+  // apart no matter how many columns the grid currently has.
+  function updateCardTipDirection(trigger) {
+    var tip = trigger.querySelector('.soon-tip');
+    var group = trigger.closest('.home-group');
+    if (!tip || !group) return;
+    var firstRow = (trigger.getBoundingClientRect().top - group.getBoundingClientRect().top) < 100;
+    tip.classList.toggle('soon-tip--below', firstRow);
+  }
+
+  // Visibility is driven by a class (.is-visible) instead of plain CSS
+  // :hover so a quick sweep of the mouse across several "coming soon"
+  // triggers in a row (adjacent nav links, or adjacent home cards) doesn't
+  // fade each tooltip fully out and the next one fully back in - hiding is
+  // delayed a bit, and re-entering ANY other soon trigger within that
+  // window cancels the pending hide instead of letting it play out, so the
+  // tooltip just swaps to the new one instead of visibly disappearing and
+  // reappearing.
+  var HIDE_DELAY = 1500;
+  var hideTimer = null;
+  var currentTip = null;
+
+  // Swapping directly from one soon trigger to another (e.g. sweeping the
+  // mouse from the top row of a nav group into the bottom row) still counts
+  // as staying "under a coming soon" the whole time, so that swap shouldn't
+  // play the fade transition at all - only a genuine first-show (nothing was
+  // visible before) or a genuine final-hide (nothing takes its place) should
+  // animate. Killing `transition` for one frame while the classes flip, then
+  // restoring it, gives an instant cut for swaps but leaves real show/hide
+  // fades intact.
+  function instantly(tip, fn) {
+    tip.style.transition = 'none';
+    fn();
+    // One rAF just applies the style change; a second is needed before the
+    // transition can safely come back, or the browser sometimes batches the
+    // `transition: none` removal with the class change and animates anyway.
+    // rAF only runs while the tab is visible though, so a plain timeout
+    // backs it up too - whichever fires first wins, and restoring twice is
+    // harmless (it's just resetting the same inline style back to '').
+    var restore = function () { tip.style.transition = ''; };
+    requestAnimationFrame(function () { requestAnimationFrame(restore); });
+    setTimeout(restore, 120);
+  }
+
+  function show(trigger) {
+    var tip = trigger.querySelector('.soon-tip');
+    if (!tip) return;
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+    var swapping = !!(currentTip && currentTip !== tip);
+    if (swapping) {
+      var prevTip = currentTip;
+      instantly(prevTip, function () { prevTip.classList.remove('is-visible'); });
+    }
+    updateCardTipDirection(trigger);
+    positionTip(trigger);
+    if (swapping) {
+      instantly(tip, function () { tip.classList.add('is-visible'); });
+    } else {
+      tip.classList.add('is-visible');
+    }
+    currentTip = tip;
+  }
+
+  function scheduleHide(trigger) {
+    var tip = trigger.querySelector('.soon-tip');
+    if (!tip) return;
+    if (hideTimer) clearTimeout(hideTimer);
+    hideTimer = setTimeout(function () {
+      tip.classList.remove('is-visible');
+      if (currentTip === tip) currentTip = null;
+      hideTimer = null;
+    }, HIDE_DELAY);
+  }
+
+  var soonTriggers = Array.prototype.slice.call(document.querySelectorAll('.site-nav__link--soon, .section-card--soon'));
+  soonTriggers.forEach(function (trigger) {
+    trigger.addEventListener('mouseenter', function () { show(trigger); });
+    trigger.addEventListener('focus', function () { show(trigger); });
+    trigger.addEventListener('mouseleave', function () { scheduleHide(trigger); });
+    trigger.addEventListener('blur', function () { scheduleHide(trigger); });
+  });
+
+  // Landing on a real, working link/card should drop the tooltip right
+  // away, not linger for the grace period above - that delay only exists to
+  // survive brief gaps (dividers, padding) while sweeping between two
+  // "coming soon" triggers, not to keep showing once you've clearly moved on
+  // to something with actual content.
+  var validTriggers = Array.prototype.slice.call(document.querySelectorAll(
+    '.site-nav__link:not(.site-nav__link--soon), .section-card:not(.section-card--soon)'
+  ));
+  function hideNow() {
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+    if (currentTip) {
+      currentTip.classList.remove('is-visible');
+      currentTip = null;
+    }
+  }
+  validTriggers.forEach(function (el) {
+    el.addEventListener('mouseenter', hideNow);
+    el.addEventListener('focus', hideNow);
+  });
+
+  window.addEventListener('resize', function () {
+    if (currentTip) {
+      var active = soonTriggers.filter(function (t) { return t.querySelector('.soon-tip') === currentTip; })[0];
+      if (active) positionTip(active);
+    }
+  });
+})();
+</script>
+
+<script id="page-table-tip-fix">
+(function () {
+  'use strict';
+  // .xref-tip normally positions itself with plain CSS (position: absolute,
+  // anchored under its trigger - see .xref-tip in main.scss). That silently
+  // gets clipped when the trigger sits inside a horizontally scrollable
+  // table (.settings-table__scroll, used by the Fabricator's Items/
+  // Fortifications/All-Forge-Values comparison tables): overflow-x: auto
+  // forces overflow-y to stop being 'visible' too (same quirk documented on
+  // .level-badge__list and .site-nav elsewhere in this codebase), so any
+  // tooltip popping below a row near the bottom of the table's own internal
+  // scroll window - e.g. hovering "Weapon Locker"/"Forge", the last two rows
+  // of the Fortifications comparison table - got cut off instead of
+  // showing. Same fix as #page-soon-tips above: escape the clip with
+  // position: fixed, computed by hand right before each tooltip shows.
+  var triggers = Array.prototype.slice.call(
+    document.querySelectorAll('.settings-table__scroll .xref-link--tip')
+  );
+  if (!triggers.length) return;
+
+  function position(trigger) {
+    var tip = trigger.querySelector('.xref-tip');
+    if (!tip) return;
+    var r = trigger.getBoundingClientRect();
+    tip.style.position = 'fixed';
+    tip.style.top = (r.bottom + 10) + 'px';
+    tip.style.left = (r.left + r.width / 2) + 'px';
+    tip.style.transform = 'translate(-50%, 0)';
+
+    // Clamp horizontally so a trigger near the left/right edge of a narrow
+    // table column doesn't push the tooltip off-screen - re-measure after
+    // it's positioned (width depends on its own text) and nudge left/right.
+    var tr = tip.getBoundingClientRect();
+    var margin = 8;
+    var shift = 0;
+    if (tr.left < margin) shift = margin - tr.left;
+    else if (tr.right > window.innerWidth - margin) shift = (window.innerWidth - margin) - tr.right;
+    if (shift) tip.style.left = (r.left + r.width / 2 + shift) + 'px';
+  }
+
+  triggers.forEach(function (trigger) {
+    trigger.addEventListener('mouseenter', function () { position(trigger); });
+    trigger.addEventListener('focus', function () { position(trigger); });
+  });
+})();
+</script>
+
+<script id="page-xref-target">
+(function () {
+  'use strict';
+  // Every cross-reference link (.xref-link) on the site points at an
+  // .xref-target element's #id, relying on native :target CSS to scroll
+  // there and flash it gold. Two things broke that in practice:
+  //   1. `html { scroll-behavior: smooth; }` (main.scss) makes the browser's
+  //      OWN automatic scroll-to-fragment on page load animate smoothly -
+  //      on a long page that can easily take longer than the flash
+  //      animation's 1.6s, so by the time you actually arrive on screen the
+  //      highlight has already faded out.
+  //   2. Some targets (e.g. Fabricator's links into Gamemodes' collapsed
+  //      "Difficulty Modifiers" <details>) sit inside a closed <details> -
+  //      a plain anchor jump can't open one, and it has no layout box while
+  //      closed, so the browser's native jump lands nowhere useful.
+  // This handles both: force-open any closed <details> ancestor, jump there
+  // INSTANTLY (bypassing the smooth-scroll CSS so it can't outrun the
+  // flash), then trigger the flash ourselves via a class toggle timed from
+  // the moment we actually land, not the moment the hash matched.
+  function activate() {
+    var raw = location.hash.slice(1);
+    if (!raw) return;
+    var id;
+    try { id = decodeURIComponent(raw); } catch (e) { id = raw; }
+    var el;
+    try { el = document.getElementById(id); } catch (e) { return; }
+    if (!el) return;
+
+    var d = el.closest('details');
+    while (d) {
+      d.open = true;
+      d = d.parentElement ? d.parentElement.closest('details') : null;
+    }
+
+    // Difficulty Modifiers' #mod-{slug} rows only ever live in the
+    // 1-column view (gamemodes/index.html, data-modifiers-onecol) - the
+    // 2-column view next to it is a plain visual alternate with no ids of
+    // its own (see page-modifiers-col-toggle below), and since 2-column is
+    // the default shown view, that 1-column view starts `hidden`. A closed
+    // <details> gets force-opened above; this does the same job for that
+    // `hidden` container, and also flips its toggle button/sibling view so
+    // the button's own label agrees with what's now actually on screen
+    // instead of just silently overriding the div and leaving it stale.
+    var modWrap = el.closest('[data-modifiers-onecol]');
+    if (modWrap) {
+      var modFull = modWrap.closest('.mode-modifiers-full');
+      var modBtn = modFull && modFull.querySelector('[data-modifiers-col-toggle]');
+      var modTwoCol = modFull && modFull.querySelector('[data-modifiers-twocol]');
+      if (modBtn && modTwoCol) {
+        modWrap.hidden = false;
+        modTwoCol.hidden = true;
+        modBtn.setAttribute('data-state', 'one-col');
+        modBtn.textContent = '2-Column View';
+      }
+    }
+
+    el.scrollIntoView({ behavior: 'instant', block: 'center' });
+
+    el.classList.remove('xref-target--flash');
+    void el.offsetWidth; // force reflow so the animation restarts every time
+    el.classList.add('xref-target--flash');
+  }
+
+  window.addEventListener('hashchange', activate);
+  window.addEventListener('load', activate);
+  if (document.readyState === 'complete') activate();
+})();
+</script>
+
+<script id="page-export-script">
+(function () {
+  'use strict';
+  var btn = document.getElementById('page-export-btn');
+  if (!btn) return;
+  var originalLabel = btn.innerHTML;
+
+  btn.addEventListener('click', function () {
+    btn.disabled = true;
+    btn.textContent = 'Exporting...';
+
+    // 1. Fetch every stylesheet so it can be inlined (works offline afterwards)
+    var links = Array.prototype.slice.call(document.querySelectorAll('link[rel="stylesheet"]'));
+    Promise.all(links.map(function (l) {
+      return fetch(l.href).then(function (r) { return r.text(); }).catch(function () { return ''; });
+    })).then(function (cssArr) {
+      var clone = document.documentElement.cloneNode(true);
+      var i, j;
+
+      // 2. Copy current form state into the clone (values set by JS don't serialize)
+      var liveF = document.querySelectorAll('input, textarea, select');
+      var cloneF = clone.querySelectorAll('input, textarea, select');
+      for (i = 0; i < liveF.length; i++) {
+        var lf = liveF[i], cf = cloneF[i];
+        if (!cf) continue;
+        if (lf.tagName === 'TEXTAREA') {
+          cf.textContent = lf.value;
+        } else if (lf.tagName === 'SELECT') {
+          for (j = 0; j < lf.options.length; j++) {
+            if (lf.options[j].selected) cf.options[j].setAttribute('selected', '');
+            else cf.options[j].removeAttribute('selected');
+          }
+        } else if (lf.type === 'checkbox' || lf.type === 'radio') {
+          if (lf.checked) cf.setAttribute('checked', ''); else cf.removeAttribute('checked');
+        } else {
+          cf.setAttribute('value', lf.value);
+        }
+      }
+
+      // 3. Make links and images absolute so they still point at the site -
+      // a baseline fallback for step 3b below, so an image whose fetch/
+      // embed fails there is at least left pointing at a real URL instead
+      // of a broken relative one.
+      var liveA = document.querySelectorAll('a[href]');
+      var cloneA = clone.querySelectorAll('a[href]');
+      for (i = 0; i < liveA.length; i++) {
+        if (cloneA[i] && cloneA[i].getAttribute('href').charAt(0) !== '#') {
+          cloneA[i].setAttribute('href', liveA[i].href);
+        }
+      }
+      var liveImg = document.querySelectorAll('img[src]');
+      var cloneImg = clone.querySelectorAll('img[src]');
+      for (i = 0; i < liveImg.length; i++) {
+        if (cloneImg[i]) cloneImg[i].setAttribute('src', liveImg[i].src);
+      }
+
+      // 3b. Actually embed every image as a data: URI instead of leaving it
+      // pointing at an absolute site URL - an absolute URL only keeps
+      // working while there's still a network connection AND the site is
+      // still reachable, which defeats the whole point of an "offline"
+      // export. Fetched once per distinct URL (imgCache) since the same
+      // icon/art often repeats many times on one page (e.g. a card's art
+      // shown in both the pool and the loadout slot). A failed fetch (CORS,
+      // 404, offline right now) just leaves that image on the absolute URL
+      // step 3 already set, rather than breaking the whole export.
+      btn.textContent = 'Embedding images...';
+      var imgCache = {};
+      function embedImage(url) {
+        if (!imgCache[url]) {
+          imgCache[url] = fetch(url)
+            .then(function (r) { return r.blob(); })
+            .then(function (blob) {
+              return new Promise(function (resolve) {
+                var reader = new FileReader();
+                reader.onload = function () { resolve(reader.result); };
+                reader.onerror = function () { resolve(null); };
+                reader.readAsDataURL(blob);
+              });
+            })
+            .catch(function () { return null; });
+        }
+        return imgCache[url];
+      }
+      var imgPromises = [];
+      // url -> data: URI, only for images that actually resolved - used by
+      // step 3c below to patch inline scripts too, not just the <img> tags
+      // themselves (see that step's own comment for why both are needed).
+      var resolvedMap = {};
+      for (i = 0; i < liveImg.length; i++) {
+        if (!cloneImg[i] || !liveImg[i].src) continue;
+        (function (target, url) {
+          imgPromises.push(embedImage(url).then(function (dataUrl) {
+            if (dataUrl) { target.setAttribute('src', dataUrl); resolvedMap[url] = dataUrl; }
+          }));
+        })(cloneImg[i], liveImg[i].src);
+      }
+
+      return Promise.all(imgPromises).then(function () {
+        // 3c. The interactive tools (Build Creator, Class/Weapon Randomizer,
+        // etc.) don't just show whatever HTML happened to be on the page at
+        // export time - their own inline <script> re-renders that same
+        // content from a JS data array (image paths and all) on every load,
+        // including the moment the exported file itself is reopened. That
+        // re-render was silently overwriting every embedded image above
+        // with its original site-relative path (e.g.
+        // "/images/cards/....png") the instant the file loaded, since
+        // nothing in step 3b touches the SCRIPT'S OWN source text - only
+        // the already-rendered <img> tags. Patching each original path
+        // string to its data: URI directly in every inline script fixes
+        // that at the source, so a fresh render pulls the embedded copy
+        // instead of a path that can't resolve from a file:// document.
+        // Matched by the path relative to this site's own origin (how
+        // Liquid's relative_url filter actually emits it in the page's
+        // source), not the full absolute URL the live DOM resolves it to.
+        var scripts = clone.querySelectorAll('script:not([src])');
+        Object.keys(resolvedMap).forEach(function (absUrl) {
+          var dataUrl = resolvedMap[absUrl];
+          var relUrl = absUrl.indexOf(location.origin) === 0 ? absUrl.slice(location.origin.length) : null;
+          for (var si = 0; si < scripts.length; si++) {
+            var sc = scripts[si];
+            if (sc.id === 'page-export-script') continue;
+            if (relUrl && sc.textContent.indexOf(relUrl) !== -1) {
+              sc.textContent = sc.textContent.split(relUrl).join(dataUrl);
+            }
+            if (sc.textContent.indexOf(absUrl) !== -1) {
+              sc.textContent = sc.textContent.split(absUrl).join(dataUrl);
+            }
+          }
+        });
+
+        // 4. Swap stylesheet links for the inlined CSS
+        var drop = clone.querySelectorAll('link[rel="stylesheet"], link[rel="canonical"], link[rel="icon"]');
+        for (i = 0; i < drop.length; i++) drop[i].parentNode.removeChild(drop[i]);
+        var style = document.createElement('style');
+        style.textContent = cssArr.join('\n');
+        clone.querySelector('head').appendChild(style);
+
+        // 4b. A plain, hardcoded-style banner (not a site class - this has to
+        // look right even if the inlined CSS above somehow fails to load)
+        // marking the file as an offline export, top and bottom, so it's
+        // never mistaken for the live page if it gets shared or reopened
+        // later.
+        var cloneBody = clone.querySelector('body');
+        var bannerText = 'EXPORTED PAGE, USE FOR OFFLINE PURPOSES AND/OR TESTING';
+        var bannerStyle = 'background:#8c6d12;color:#fff;font-family:\'Segoe UI\',Arial,sans-serif;'
+          + 'font-weight:700;font-size:0.8rem;letter-spacing:0.04em;text-align:center;'
+          + 'padding:0.6rem 1rem;';
+        if (cloneBody) {
+          var topBanner = document.createElement('div');
+          topBanner.setAttribute('style', bannerStyle);
+          topBanner.textContent = bannerText;
+          cloneBody.insertBefore(topBanner, cloneBody.firstChild);
+
+          var bottomBanner = document.createElement('div');
+          bottomBanner.setAttribute('style', bannerStyle);
+          bottomBanner.textContent = bannerText;
+          cloneBody.appendChild(bottomBanner);
+        }
+
+        // 5. The exported copy can't export itself - remove the button + this script
+        var xb = clone.querySelector('#page-export-btn');
+        if (xb) xb.parentNode.removeChild(xb);
+        var xs = clone.querySelector('#page-export-script');
+        if (xs) xs.parentNode.removeChild(xs);
+
+        // 6. Download
+        var name = location.pathname.replace(/\/+$/, '').split('/').pop() || '{{ site.short_name | downcase }}';
+        var blob = new Blob(['<!DOCTYPE html>\n' + clone.outerHTML], { type: 'text/html' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = name + '.html';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () {
+          URL.revokeObjectURL(a.href);
+          a.parentNode.removeChild(a);
+          btn.disabled = false;
+          btn.innerHTML = originalLabel;
+        }, 500);
+      });
+    });
+  });
+})();
+</script>
+
+<script id="gm-reset-time">
+(function () {
+  'use strict';
+  // The game's daily reset (Horde's "Daily reward for completing" note,
+  // gamemodes/index.html <- _data/gamemodes.yml's difficulties_notes) lands
+  // at one fixed moment in UTC, not the same clock hour for every viewer -
+  // .gm-reset-time carries that UTC time in data-reset-utc ("HH:MM") and
+  // starts out just showing that raw UTC value as its own text (e.g.
+  // "19:00 UTC") so anyone without JS still gets a correct, if less
+  // convenient, answer. This replaces it with whoever's actually looking at
+  // the page's own local time as soon as the page loads, so the common case
+  // reads as a plain "8:00 PM your time" instead of everyone having to do
+  // their own UTC conversion by hand.
+  var els = document.querySelectorAll('.gm-reset-time[data-reset-utc]');
+  if (!els.length) return;
+  Array.prototype.forEach.call(els, function (el) {
+    var parts = el.getAttribute('data-reset-utc').split(':');
+    var h = +parts[0], m = +parts[1] || 0;
+    if (isNaN(h)) return;
+    // Anchored to today's date in UTC purely to build a valid moment to
+    // convert - only the resulting time-of-day is shown (toLocaleTimeString
+    // below never prints a date), so it doesn't matter that this reset
+    // might land on what's already tomorrow (or still yesterday) in the
+    // viewer's own timezone.
+    var now = new Date();
+    var utcMoment = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), h, m, 0));
+    var localTime = utcMoment.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    el.textContent = localTime + ' your time';
+  });
+})();
+</script>
+
+<script id="site-header-commit-time">
+(function () {
+  'use strict';
+  // Revision banner's commit date/time (.site-header__updated-datetime,
+  // header.html) - same "server-render a sensible default, then swap to the
+  // viewer's own local time client-side" approach as #gm-reset-time right
+  // above, just for a full date+time instead of a daily time-of-day.
+  // data-commit-epoch is seconds since the Unix epoch (Liquid's date "%s"
+  // filter). If this doesn't run at all (JS disabled) or the epoch turns
+  // out bogus, the element's server-rendered text - the commit's own
+  // git-timezone value, "%z" offset included - is simply left alone, so
+  // there's always a correct value on screen either way.
+  var els = document.querySelectorAll('.site-header__updated-datetime[data-commit-epoch]');
+  if (!els.length) return;
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+  Array.prototype.forEach.call(els, function (el) {
+    var epoch = +el.getAttribute('data-commit-epoch');
+    if (!epoch) return;
+    var d = new Date(epoch * 1000);
+    if (isNaN(d.getTime())) return;
+    var datePart = pad(d.getDate()) + '-' + pad(d.getMonth() + 1) + '-' + d.getFullYear();
+    var timePart = d.toLocaleTimeString([], { hour12: false });
+    el.textContent = datePart + ' | ' + timePart;
+  });
+})();
+</script>
+
+<script id="page-category-collapse-chevron">
+(function () {
+  'use strict';
+  // Keeps a plain <details class="modes-category-collapse"><summary
+  // class="modes-category__header--toggle"> chevron pointed the right way
+  // (home.scss's .modes-category__header--toggle::before rotates only on
+  // data-expanded="true", not the native open attribute directly) - native
+  // <details> has no CSS way to select "am I open" from a sibling/ancestor
+  // selector, so this just mirrors .open onto that attribute whenever one
+  // toggles. Deliberately separate from the Fabricator page's own
+  // .fab-collapsible script (fabricator/index.html) - that one also tracks
+  // per-tile open/closed state and animates height, both overkill for a
+  // plain whole-column collapse like Gamemodes' PVE/PVP sections. The
+  // native 'toggle' event doesn't bubble, so this has to listen in the
+  // capture phase to catch every one of these from a single page-wide
+  // listener instead of wiring up each <details> individually.
+  function sync(details) {
+    var summary = details.querySelector(':scope > summary.modes-category__header--toggle');
+    if (summary) { summary.setAttribute('data-expanded', details.open ? 'true' : 'false'); }
+  }
+  // Initial pass on load - the 'toggle' event below only fires on a state
+  // CHANGE, so a <details open> that's never actually been clicked yet
+  // would otherwise sit there open with its chevron still pointing as if
+  // closed until the first click.
+  Array.prototype.forEach.call(document.querySelectorAll('.modes-category-collapse'), sync);
+  document.addEventListener('toggle', function (e) {
+    var details = e.target;
+    if (!details || !details.classList || !details.classList.contains('modes-category-collapse')) return;
+    sync(details);
+  }, true);
+})();
+</script>
+
+<script id="page-modifiers-col-toggle">
+(function () {
+  'use strict';
+  // "2-Column View" button on the Difficulty Modifiers table
+  // (gamemodes/index.html, .mode-modifiers-full__col-toggle) - the 2-column
+  // view is a second, separate pair of real <table>'s
+  // (.mode-modifiers-full__twocol, each modifier split into two halves at
+  // build time in Liquid) rather than one table reflowed via CSS grid - an
+  // earlier CSS-grid version looked broken next to every other
+  // .settings-table on the site, since it fought the table's own layout
+  // instead of just being the table twice. This just hides one view and
+  // shows the other; only the 1-column table carries the #mod-{slug} row
+  // IDs Fabricator deep-links to (#page-xref-target below), so toggling
+  // never duplicates an id in the DOM. One listener per button rather than
+  // a single delegated one, since each Gamemodes mode card can have its own
+  // Difficulty Modifiers table/button pair.
+  Array.prototype.forEach.call(document.querySelectorAll('[data-modifiers-col-toggle]'), function (btn) {
+    var wrap = btn.closest('.mode-modifiers-full');
+    var oneCol = wrap && wrap.querySelector('[data-modifiers-onecol]');
+    var twoCol = wrap && wrap.querySelector('[data-modifiers-twocol]');
+    if (!oneCol || !twoCol) return;
+    btn.addEventListener('click', function () {
+      var showTwoCol = btn.getAttribute('data-state') === 'one-col';
+      oneCol.hidden = showTwoCol;
+      twoCol.hidden = !showTwoCol;
+      btn.setAttribute('data-state', showTwoCol ? 'two-col' : 'one-col');
+      btn.textContent = showTwoCol ? '1-Column View' : '2-Column View';
+    });
+  });
+})();
+</script>
+
+<script id="page-gamemodes-persist">
+(function () {
+  'use strict';
+  // Persists every collapsible's open/closed state, and the Difficulty
+  // Modifiers column-view choice, on the Gamemodes page - both to
+  // localStorage (this browser's own remembered layout) and to a `?gm=`
+  // URL query param, so a shared link opens to the same layout too. Same
+  // two-tier, URL-wins-then-updates-localStorage approach as
+  // #site-theme-switcher uses for `?theme=` below - this just persists a
+  // small JSON blob instead of one slug, since there can be any number of
+  // independently-collapsible things on this one page.
+  //
+  // Every persistable element carries its own data-persist-key
+  // (gamemodes/index.html: cat-*/mode-*/detail-* on <details>,
+  // modcols-* on the column-toggle buttons) - this script never hardcodes
+  // which ones exist, so a future addition to the page only needs that one
+  // attribute to be picked up here automatically.
+  var STORAGE_KEY = '{{ site.short_name | downcase }}-gamemodes-layout';
+  var detailsEls = Array.prototype.slice.call(document.querySelectorAll('details[data-persist-key]'));
+  var colToggleBtns = Array.prototype.slice.call(document.querySelectorAll('[data-modifiers-col-toggle][data-persist-key]'));
+  if (!detailsEls.length && !colToggleBtns.length) return;
+
+  function currentState() {
+    var open = detailsEls.filter(function (d) { return d.open; })
+      .map(function (d) { return d.getAttribute('data-persist-key'); });
+    var cols = {};
+    colToggleBtns.forEach(function (btn) {
+      cols[btn.getAttribute('data-persist-key')] = btn.getAttribute('data-state');
+    });
+    return { open: open, cols: cols };
+  }
+
+  // Sets every element to match a saved/shared state. <details>' own open
+  // IDL property doesn't reliably fire a native 'toggle' event when set
+  // programmatically, so this dispatches one itself - #page-category-
+  // collapse-chevron's own document-level capture listener (registered
+  // earlier in this file, so already active by the time this runs) picks
+  // it up the same as a real click and keeps its chevron in sync, with no
+  // need to care which of the two scripts happens to run first. The
+  // column-toggle buttons are restored via a real .click() instead, since
+  // #page-modifiers-col-toggle's own listener (also already registered by
+  // this point) already does exactly the state flip + label update needed.
+  function applyState(state) {
+    if (!state) return;
+    var openKeys = state.open || [];
+    detailsEls.forEach(function (d) {
+      var shouldBeOpen = openKeys.indexOf(d.getAttribute('data-persist-key')) !== -1;
+      if (d.open !== shouldBeOpen) {
+        d.open = shouldBeOpen;
+        d.dispatchEvent(new Event('toggle'));
+      }
+    });
+    var cols = state.cols || {};
+    colToggleBtns.forEach(function (btn) {
+      var want = cols[btn.getAttribute('data-persist-key')];
+      if (want && want !== btn.getAttribute('data-state')) btn.click();
+    });
+  }
+
+  function save() {
+    var json = JSON.stringify(currentState());
+    try { localStorage.setItem(STORAGE_KEY, json); }
+    catch (e) { /* private browsing / storage disabled - just skip persisting */ }
+    try {
+      var url = new URL(location.href);
+      url.searchParams.set('gm', json);
+      history.replaceState(history.state, '', url);
+    } catch (e) { /* malformed URL/unsupported API - just skip reflecting it */ }
+  }
+
+  // A `?gm=` link is an explicit "open it like this" instruction (e.g. a
+  // shared link) and wins over this browser's own remembered layout - same
+  // precedence #site-theme-switcher uses for `?theme=`. Either way,
+  // restoring counts as the current layout, so it's saved right back below
+  // too (a shared link also becomes this browser's own new default).
+  var urlState = null;
+  try {
+    var raw = new URLSearchParams(location.search).get('gm');
+    if (raw) urlState = JSON.parse(raw);
+  } catch (e) { /* malformed/foreign ?gm= - ignore and fall back below */ }
+
+  if (urlState) {
+    applyState(urlState);
+    save();
+  } else {
+    try {
+      var saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) applyState(JSON.parse(saved));
+    } catch (e) { /* ignore */ }
+  }
+
+  // Re-save on every future change. <details>' native 'toggle' doesn't
+  // bubble, hence capture phase (matches #page-category-collapse-chevron's
+  // own listener above); the column-toggle buttons already get a save via
+  // their own extra click listener here, layered on top of
+  // #page-modifiers-col-toggle's - both fire on the same real user click.
+  document.addEventListener('toggle', function (e) {
+    if (e.target && e.target.matches && e.target.matches('details[data-persist-key]')) save();
+  }, true);
+  colToggleBtns.forEach(function (btn) { btn.addEventListener('click', save); });
+})();
+</script>
+
+<script id="site-header-uptime">
+(function () {
+  'use strict';
+  // Live "time since server start" counter next to the revision banner
+  // title (.site-header__updated-uptime, header.html) - ticks every
+  // second purely client-side off Date.now(), no server involvement once
+  // the page has loaded. data-start-epoch is seconds since the Unix
+  // epoch (Liquid's date "%s" filter), set from server_start in
+  // _data/last_commit.yml (written by start-jekyll.bat when the process
+  // actually starts) - deliberately NOT the commit time shown in the
+  // detail line below, which is a different, usually much older, value.
+  //
+  // A second, nested clock rides along in the same element:
+  // data-regen-epoch is site.time - Jekyll's own build timestamp, which
+  // gets reset to "now" on every regeneration in --watch mode (any file
+  // save), not just an actual server restart. Genuinely useful on its own
+  // while developing (at a glance: "how stale is what I'm looking at"),
+  // so it's kept rather than treated as just the bug the real Uptime
+  // clock above used to have before it got its own dedicated
+  // server_start value.
+  //
+  // Escalating format, per how this was asked for: show only the units
+  // that actually matter at the current magnitude rather than always
+  // padding out to the largest one - plain seconds under a minute,
+  // minutes+seconds under an hour, hours+minutes+seconds under a day,
+  // days+hours+minutes+seconds beyond that. Same format function serves
+  // both clocks. Returns HTML (unit letters wrapped in <b>), not plain
+  // text - this whole element is built with innerHTML below, since
+  // "Uptime"/"Regenerated" and every unit letter are all meant to be bold.
+  var els = document.querySelectorAll('.site-header__updated-uptime[data-start-epoch]');
+  if (!els.length) return;
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+  function format(totalSeconds) {
+    if (totalSeconds < 0) totalSeconds = 0;
+    var s = totalSeconds % 60;
+    var totalMinutes = Math.floor(totalSeconds / 60);
+    var m = totalMinutes % 60;
+    var totalHours = Math.floor(totalMinutes / 60);
+    var h = totalHours % 24;
+    var d = Math.floor(totalHours / 24);
+
+    if (totalMinutes < 1) return '<b>' + s + '</b>s';
+    if (totalHours < 1) return '<b>' + m + '</b>m <b>' + pad(s) + '</b>s';
+    if (d < 1) return '<b>' + h + '</b>h <b>' + pad(m) + '</b>m <b>' + pad(s) + '</b>s';
+    return '<b>' + d + '</b>d <b>' + h + '</b>h <b>' + pad(m) + '</b>m <b>' + pad(s) + '</b>s';
+  }
+
+  function tick() {
+    var now = Date.now();
+    Array.prototype.forEach.call(els, function (el) {
+      var startEpoch = +el.getAttribute('data-start-epoch');
+      if (!startEpoch) { el.textContent = 'uptime unavailable'; return; }
+      var html = '<b>Uptime</b>: ' + format(Math.floor((now - startEpoch * 1000) / 1000));
+
+      // Regenerated rides along right after Uptime, plain text (no
+      // wrapping parens/brackets - this whole line already reads as its
+      // own thing on its own row now), but only when it would actually
+      // say something different - data-regen-epoch equal to data-start-
+      // epoch means the page hasn't regenerated since the server itself
+      // started (no file saved yet), so the two clocks would just count
+      // up in lockstep forever and Regenerated would be pure noise
+      // duplicating Uptime.
+      var regenEpoch = +el.getAttribute('data-regen-epoch');
+      if (regenEpoch && regenEpoch !== startEpoch) {
+        html += ', <b>Regenerated</b>: ' + format(Math.floor((now - regenEpoch * 1000) / 1000));
+      }
+      el.innerHTML = html;
+    });
+  }
+
+  tick();
+  setInterval(tick, 1000);
+})();
+</script>
+
+<script id="site-theme-switcher">
+(function () {
+  'use strict';
+  // Site-wide theme switcher. Every themed color on the site (site accent,
+  // class category colors, card rarity colors, trait badge colors - see
+  // main.scss's :root block) is a CSS custom property derived via var()/
+  // color-mix() rather than a raw hex, specifically so this script can
+  // repaint all of it just by rewriting those custom properties - see
+  // _data/themes/README.md for the full schema and how to add to it. Swatch
+  // markup + each theme's full data (data-theme, one jsonify'd blob - NOT
+  // separate data-theme-* attributes, so a new field in a theme's schema
+  // never needs a matching change here) come from header.html, generated
+  // from _data/themes/*.yml.
+  //
+  // Three behaviors:
+  //   1. Restore whatever the visitor last picked (localStorage) on load -
+  //      same "sensible server default, then swap client-side" approach as
+  //      #site-header-commit-time above; a brief flash of the Default theme
+  //      before this runs (this script is at the very end of body) is an
+  //      accepted tradeoff, not a bug.
+  //   2. Hovering/focusing a swatch live-previews it (writes the vars,
+  //      doesn't persist); leaving without clicking reverts to whichever
+  //      theme is actually selected.
+  //   3. Clicking a swatch selects + persists it, and closes the panel.
+  var STORAGE_KEY = '{{ site.short_name | downcase }}-theme';
+  var root = document.documentElement;
+  var picker = document.getElementById('theme-picker');
+  if (!picker) return;
+  var toggle = document.getElementById('theme-picker-toggle');
+  var panel = document.getElementById('theme-picker-panel');
+  var swatches = Array.prototype.slice.call(panel.querySelectorAll('.theme-picker__swatch'));
+  if (!swatches.length) return;
+
+  // Parsed once up front (not re-parsed on every hover) and kept alongside
+  // each swatch element via a parallel array - see themeFor().
+  var themes = swatches.map(function (swatch) {
+    try { return JSON.parse(swatch.getAttribute('data-theme')); }
+    catch (e) { return null; }
+  });
+
+  function themeFor(swatch) {
+    var i = swatches.indexOf(swatch);
+    return i === -1 ? null : themes[i];
+  }
+
+  // Generic by design: loops whatever top-level groups (categories/rarity/
+  // traits/semantic/...) actually exist on this theme's data and writes the matching
+  // --theme-<group>-<key>[-suffix] custom property for each entry - adding a
+  // brand new category, rarity tier, or trait to a theme's .yml takes effect
+  // here with NO change to this function. (A property this loop writes only
+  // has an effect where some CSS rule already reads that exact variable
+  // name, though - introducing a genuinely NEW kind of thing, as opposed to
+  // a new value for an existing one, still needs a CSS hook too. See
+  // _data/themes/README.md.)
+  function applyTheme(themeData) {
+    if (!themeData) return;
+    if (themeData.accent) root.style.setProperty('--site-accent', themeData.accent);
+    if (themeData.accent_dark) root.style.setProperty('--site-accent-dark', themeData.accent_dark);
+
+    var categories = themeData.categories || {};
+    Object.keys(categories).forEach(function (key) {
+      var cat = categories[key] || {};
+      if (cat.color) root.style.setProperty('--theme-cat-' + key, cat.color);
+      if (cat.dark) root.style.setProperty('--theme-cat-' + key + '-dark', cat.dark);
+    });
+
+    // "Flat" groups - a plain { key: "#hex" } map, one custom property per
+    // entry, no color/dark or color/base split. Adding a FOURTH group this
+    // shape (a new set of single-hex, non-structured theme colors) is just
+    // adding its name here - see _data/themes/README.md.
+    ['rarity', 'semantic'].forEach(function (group) {
+      var entries = themeData[group] || {};
+      Object.keys(entries).forEach(function (key) {
+        root.style.setProperty('--theme-' + group + '-' + key, entries[key]);
+      });
+    });
+
+    var traits = themeData.traits || {};
+    Object.keys(traits).forEach(function (key) {
+      var trait = traits[key] || {};
+      // `base` defaults to `color` when a theme's trait entry omits it - see
+      // _data/themes/README.md - so most traits only need one value in YAML.
+      if (trait.color) root.style.setProperty('--theme-trait-' + key + '-color', trait.color);
+      var base = trait.base || trait.color;
+      if (base) root.style.setProperty('--theme-trait-' + key + '-base', base);
+    });
+  }
+
+  function swatchFor(slug) {
+    for (var i = 0; i < swatches.length; i++) {
+      if (swatches[i].getAttribute('data-theme-slug') === slug) return swatches[i];
+    }
+    return null;
+  }
+
+  // Whichever swatch is "selected" is the committed theme that hovering
+  // away from a preview reverts back to. Falls back to the first swatch
+  // (Default) if neither the URL nor localStorage has a valid value - e.g.
+  // a since-removed theme slug from an older visit or shared link.
+  var selected = null;
+
+  // Reflects the current theme into the address bar (?theme=<slug>) so this
+  // page's URL becomes a shareable/bookmarkable link for it - via
+  // replaceState, not pushState, so picking through several themes doesn't
+  // fill up the visitor's back-button history with one entry each.
+  function updateUrl(slug) {
+    try {
+      var url = new URL(location.href);
+      url.searchParams.set('theme', slug);
+      history.replaceState(history.state, '', url);
+    } catch (e) { /* malformed URL/unsupported API - just skip reflecting it */ }
+  }
+
+  function select(swatch, persist) {
+    if (!swatch) return;
+    if (selected) {
+      selected.classList.remove('is-selected');
+      selected.setAttribute('aria-checked', 'false');
+    }
+    selected = swatch;
+    selected.classList.add('is-selected');
+    selected.setAttribute('aria-checked', 'true');
+    applyTheme(themeFor(swatch));
+    if (persist) {
+      var slug = swatch.getAttribute('data-theme-slug');
+      try { localStorage.setItem(STORAGE_KEY, slug); }
+      catch (e) { /* private browsing / storage disabled - just skip persisting */ }
+      updateUrl(slug);
+    }
+  }
+
+  // A `?theme=<slug>` query param wins over a saved localStorage choice -
+  // it's an explicit "load this theme" instruction (e.g. a link someone
+  // shared), where localStorage is only this browser's own remembered
+  // default. Either way this counts as a real selection (persist: true), so
+  // a shared link also updates this browser's own remembered choice going
+  // forward - a plain click to another page on the site (which drops the
+  // query string) still shows the right theme via that saved value. Loading
+  // a plain URL with no theme param, on the other hand, restores silently
+  // from localStorage (persist: false) without adding one, so visiting the
+  // site normally doesn't leave every page carrying a `?theme=` string.
+  var urlSlug = null;
+  try { urlSlug = new URLSearchParams(location.search).get('theme'); } catch (e) { /* ignore */ }
+  var urlSwatch = urlSlug && swatchFor(urlSlug);
+  if (urlSwatch) {
+    select(urlSwatch, true);
+  } else {
+    var savedSlug = null;
+    try { savedSlug = localStorage.getItem(STORAGE_KEY); } catch (e) { /* ignore */ }
+    select(swatchFor(savedSlug) || swatches[0], false);
+  }
+
+  swatches.forEach(function (swatch) {
+    var preview = function () {
+      applyTheme(themeFor(swatch));
+    };
+    var revert = function () {
+      if (selected) applyTheme(themeFor(selected));
+    };
+    swatch.addEventListener('mouseenter', preview);
+    swatch.addEventListener('mouseleave', revert);
+    swatch.addEventListener('focus', preview);
+    swatch.addEventListener('blur', revert);
+    swatch.addEventListener('click', function () {
+      select(swatch, true);
+      closePanel();
+      toggle.focus();
+    });
+  });
+
+  // Fixed + hand-positioned (recomputed right before every open) for the
+  // same reason as #page-soon-tips above: .site-nav has overflow: hidden on
+  // desktop for its collapse-on-scroll animation, which would otherwise clip
+  // this panel before it ever became visible. Anchored to the toggle
+  // button's own right edge (not centered, like the tooltips above) since
+  // it's the last item in the nav and a centered panel would run off the
+  // right edge of the viewport.
+  function positionPanel() {
+    var r = toggle.getBoundingClientRect();
+    var nav = toggle.closest('.site-nav');
+    var navBottom = nav ? nav.getBoundingClientRect().bottom : r.bottom;
+    panel.style.top = (navBottom + 8) + 'px';
+    panel.style.left = 'auto';
+    panel.style.right = Math.max(8, window.innerWidth - r.right) + 'px';
+  }
+
+  function isOpen() { return panel.classList.contains('is-open'); }
+
+  function openPanel() {
+    positionPanel();
+    picker.classList.add('is-open');
+    panel.classList.add('is-open');
+    panel.setAttribute('aria-hidden', 'false');
+    toggle.setAttribute('aria-expanded', 'true');
+  }
+
+  function closePanel() {
+    picker.classList.remove('is-open');
+    panel.classList.remove('is-open');
+    panel.setAttribute('aria-hidden', 'true');
+    toggle.setAttribute('aria-expanded', 'false');
+  }
+
+  toggle.addEventListener('click', function () {
+    if (isOpen()) closePanel(); else openPanel();
+  });
+
+  document.addEventListener('click', function (e) {
+    if (isOpen() && !picker.contains(e.target)) closePanel();
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && isOpen()) { closePanel(); toggle.focus(); }
+  });
+
+  window.addEventListener('resize', function () { if (isOpen()) positionPanel(); });
+  window.addEventListener('scroll', function () { if (isOpen()) positionPanel(); }, true);
+})();
+</script>

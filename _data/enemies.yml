@@ -1,0 +1,11 @@
+# ── Enemies ────────────────────────────────────────────────────────────────
+# Shown by enemies/index.html as a table: its `columns` front matter picks which fields are columns, so add
+# any field you need here and list it there. Images (small icons): images/enemies/<slug>.png.
+# EXAMPLE ENTRIES: replace them with your game's.
+
+intro: "Enemies you fight in Horde. Weapons written as a link (see this file) open on the Weapons page."
+
+list:
+  - { name: "Drone",  slug: "drone",  health: "?", weapon: "[[weapons:lancer]]", notes: "Basic infantry." }
+  - { name: "Hunter", slug: "hunter", health: "?", weapon: "[[weapons:gnasher]]" }
+  - { name: "Juvie",  slug: "juvie",  health: "?", notes: "Melee only." }

@@ -1,0 +1,23 @@
+# Jekyll build output - regenerated on every build, never commit
+_site/
+ref/_site/
+.jekyll-cache/
+.jekyll-metadata
+.sass-cache/
+
+# Ruby / bundler
+.bundle/
+vendor/
+Gemfile.lock
+
+# Local-dev-only "Last updated" source (see start-jekyll.bat + _plugins/
+# last_commit.rb) - written fresh by start-jekyll.bat before every local
+# `jekyll serve`, never committed. Production/CI has no start-jekyll.bat
+# step, so this file simply won't exist there and header.html falls back
+# to _plugins/last_commit.rb's own git call instead.
+_data/last_commit.yml
+
+# Python cache (from sorting scripts in ref/)
+__pycache__/
+*.pyc
+*.sh

@@ -1,0 +1,15 @@
+# ── Characters ─────────────────────────────────────────────────────────────
+# Shown by characters/index.html (layout: list, group_by: faction). Images: images/characters/<slug>.jpg.
+# `groups` sets the order and titles of the faction headings; entries whose faction isn't listed don't show.
+# EXAMPLE ENTRIES: replace them with your game's.
+
+groups:
+  - { key: cog,   title: "COG" }
+  - { key: swarm, title: "Swarm" }
+
+list:
+  - { name: "JD Fenix",    slug: "jd-fenix",    faction: "cog" }
+  - { name: "Kait Diaz",   slug: "kait-diaz",   faction: "cog" }
+  - { name: "Del Walker",  slug: "del-walker",  faction: "cog" }
+  - { name: "Drone",       slug: "drone",       faction: "swarm" }
+  - { name: "Hunter",      slug: "hunter",      faction: "swarm" }

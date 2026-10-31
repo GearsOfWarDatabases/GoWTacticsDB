@@ -1,0 +1,12 @@
+# ── Gamemodes ──────────────────────────────────────────────────────────────
+# Shown by gamemodes/index.html (group_by: type). Images: images/gamemodes/<slug>.png.
+# EXAMPLE ENTRIES: replace them with your game's.
+
+groups:
+  - { key: pvp, title: "Versus" }
+  - { key: pve, title: "Co-op" }
+
+list:
+  - { name: "Team Deathmatch", slug: "tdm",     type: "pvp", desc: "Two teams of {5}, a shared pool of respawns." }
+  - { name: "King of the Hill", slug: "koth",   type: "pvp", desc: "Hold the ring to score." }
+  - { name: "Horde",           slug: "horde",   type: "pve", desc: "{50} waves of enemies with a Fabricator." }

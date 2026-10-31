@@ -1,0 +1,42 @@
+{%- comment -%}
+Renders a description from _data. Two shortcuts:
+  {value}             highlighted number or keyword, e.g. "Deals {120} damage"
+  [[section:slug]]    link to an entry of another list page, by its _data file and slug, e.g. [[weapons:lancer]]
+                      shows that entry's name and links to /<section>/#<slug>
+Usage: {% include render-desc.html text=item.desc %}
+{%- endcomment -%}
+{%- assign _t = include.text | default: "" -%}
+{%- if _t contains '[[' -%}
+{%- assign _parts = _t | split: "[[" -%}{%- assign _out = "" -%}
+{%- for _p in _parts -%}
+{%- if forloop.first -%}{%- assign _out = _p -%}
+{%- elsif _p contains "]]" -%}
+{%- assign _segs = _p | split: "]]" -%}{%- assign _ref = _segs[0] | split: ":" -%}
+{%- assign _sec = _ref[0] -%}{%- assign _slug = _ref[1] -%}
+{%- assign _item = site.data[_sec].list | where: "slug", _slug | first -%}
+{%- assign _href = '/' | append: _sec | append: '/' | relative_url | append: '#' | append: _slug -%}
+{%- capture _link -%}
+{%- if _item -%}<a class="xref-link" href="{{ _href }}">{{ _item.name }}</a>{%- else -%}{{ _segs[0] }}{%- endif -%}
+{%- endcapture -%}
+{%- assign _tail = _p | remove_first: _segs[0] | remove_first: "]]" -%}
+{%- assign _out = _out | append: _link | append: _tail -%}
+{%- else -%}{%- assign _out = _out | append: "[[" | append: _p -%}
+{%- endif -%}
+{%- endfor -%}
+{%- assign _t = _out -%}
+{%- endif -%}
+{%- if _t contains '{' -%}
+{%- assign _parts = _t | split: "{" -%}{%- assign _out = "" -%}
+{%- for _p in _parts -%}
+{%- if forloop.first -%}{%- assign _out = _p -%}
+{%- elsif _p contains "}" -%}
+{%- assign _segs = _p | split: "}" -%}
+{%- assign _tail = _p | remove_first: _segs[0] | remove_first: "}" -%}
+{%- assign _out = _out | append: '<mark class="kw kw--value">' | append: _segs[0] | append: '</mark>' -%}
+{%- assign _out = _out | append: _tail -%}
+{%- else -%}{%- assign _out = _out | append: "{" | append: _p -%}
+{%- endif -%}
+{%- endfor -%}
+{%- assign _t = _out -%}
+{%- endif -%}
+{{ _t }}

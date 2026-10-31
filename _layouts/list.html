@@ -1,0 +1,91 @@
+---
+layout: default
+---
+{%- comment -%}
+One layout for most sections: it lists _data/<page.data>.yml's `list`. Front matter:
+  data:      the _data file, without .yml (default: the page's folder name)
+  images:    folder under images/ holding <slug>.png / .jpg (default: same as data); missing images just hide
+  image_ext: png (default) or jpg
+  group_by:  a field to split the list into groups, e.g. faction; _data's `groups` gives their order and titles
+  columns:   show a table instead of cards, e.g. [{ key: health, label: Health }, { key: weapon, label: Weapon }]
+  intro:     text under the title (or write it as the page's content)
+Every entry needs `name` and `slug`; `badge`, `desc` and any column fields are optional.
+{%- endcomment -%}
+{%- assign data_name = page.data | default: page.dir | remove: "/" -%}
+{%- assign d = site.data[data_name] -%}
+{%- assign img_dir = page.images | default: data_name -%}
+{%- assign ext = page.image_ext | default: "png" -%}
+<div class="section-page">
+  <div class="section-page__header">
+    <h1 class="section-page__title">{{ page.title }}</h1>
+  </div>
+  {%- if page.intro %}<p class="section-page__intro">{{ page.intro }}</p>{% endif %}
+  {%- if d.intro %}<p class="section-page__intro">{% include render-desc.html text=d.intro %}</p>{% endif %}
+  {{ content }}
+
+  {%- if page.group_by -%}
+    {%- if d.groups -%}{%- assign groups = d.groups -%}
+    {%- else -%}{%- assign groups = d.list | map: page.group_by | uniq -%}{%- endif -%}
+  {%- else -%}
+    {%- assign groups = "" | split: "," | push: "_all" -%}
+  {%- endif -%}
+
+  {%- for g in groups -%}
+  {%- assign gkey = g.key | default: g -%}
+  {%- if gkey == "_all" -%}{%- assign items = d.list -%}
+  {%- else -%}{%- assign items = d.list | where: page.group_by, gkey -%}{%- endif -%}
+  {%- if items.size == 0 -%}{%- continue -%}{%- endif -%}
+  {%- if gkey != "_all" %}
+  <h2 class="list-group__title">{{ g.title | default: gkey }}
+    <span class="list-group__count">{{ items.size }}</span></h2>
+  {%- endif %}
+
+  {%- if page.columns %}
+  <div class="settings-table__scroll">
+    <table class="settings-table list-table">
+      <thead><tr><th>Name</th>{% for c in page.columns %}<th>{{ c.label }}</th>{% endfor %}</tr></thead>
+      <tbody>
+        {%- for it in items %}
+        <tr id="{{ it.slug }}">
+          <td class="list-table__name">
+            {%- assign img = '/images/' | append: img_dir | append: '/' | append: it.slug | append: '.' | append: ext %}
+            <img class="list-table__img" src="{{ img | relative_url }}" alt="" loading="lazy"
+              onerror="this.style.display='none'">
+            <span>{{ it.name }}</span>{% if it.badge %} <span class="type-badge">{{ it.badge }}</span>{% endif %}
+          </td>
+          {%- for c in page.columns %}
+          <td>{% assign v = it[c.key] %}{% if v %}{% include render-desc.html text=v %}{% else %}&mdash;{% endif %}</td>
+          {%- endfor %}
+        </tr>
+        {%- endfor %}
+      </tbody>
+    </table>
+  </div>
+  {%- else %}
+  <div class="list-grid">
+    {%- for it in items %}
+    <article class="list-card xref-target" id="{{ it.slug }}">
+      {%- assign img = '/images/' | append: img_dir | append: '/' | append: it.slug | append: '.' | append: ext %}
+      <div class="list-card__img">
+        <img src="{{ img | relative_url }}" alt="" loading="lazy"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <span class="list-card__placeholder" style="display:none">{{ page.icon | default: "&#9881;" }}</span>
+      </div>
+      <div class="list-card__body">
+        <h3 class="list-card__name">{{ it.name }}</h3>
+        {%- if it.badge %}<span class="type-badge">{{ it.badge }}</span>{% endif %}
+        {%- if it.desc %}<p class="list-card__desc">{% include render-desc.html text=it.desc %}</p>{% endif %}
+      </div>
+    </article>
+    {%- endfor %}
+  </div>
+  {%- endif %}
+  {%- endfor %}
+
+  {%- if d.list == nil or d.list.size == 0 %}
+  <div class="section-page__placeholder">
+    <span class="section-page__placeholder-icon">&#9881;</span>
+    <p>Nothing here yet: add entries to <code>_data/{{ data_name }}.yml</code>.</p>
+  </div>
+  {%- endif %}
+</div>

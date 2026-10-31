@@ -1,0 +1,182 @@
+<header class="site-header">
+  <div class="site-header__inner">
+    {%- if site.notice and site.notice.text %}
+    <a class="site-header__eday" href="{{ site.notice.url }}">{{ site.notice.text }}
+      <strong>{{ site.notice.link_text }}</strong></a>
+    {%- endif %}
+    <div class="site-header__top">
+      {%- comment %} AzerothCore-style revision banner: "<site title> rev.
+      <short hash> <date> | <time> (<branch> branch)". Last actual git
+      commit info, not just whenever this build happened to run. Each
+      field falls through its own three-deep chain:
+        1. _data/last_commit.yml - written fresh by ref/start-jekyll.bat
+           before every local `jekyll serve` (gitignored, dev-machine-only).
+           Exists because _plugins/last_commit.rb's own git calls - meant to
+           work the same way here and in CI - mysteriously never execute
+           under the real `jekyll` CLI on at least one local Windows setup,
+           for reasons not fully root-caused; this sidesteps that instead
+           of depending on it.
+        2. site.last_commit_* - set by _plugins/last_commit.rb. Doesn't
+           exist locally on an affected machine (see above), but there's no
+           start-jekyll.bat step in CI/production, so this is what actually
+           drives the banner there, where the plugin isn't known to be
+           broken.
+        3. site.time / "" - Jekyll's own build timestamp for the date, and
+           nothing at all for hash/branch, if neither of the above panned
+           out (e.g. no .git directory present at all) - see below, the
+           hash/branch segments just quietly omit themselves rather than
+           print blank parens.
+      {% endcomment %}
+      {%- assign updated_time = site.data.last_commit.time | default: site.last_commit_time | default: site.time %}
+      {%- assign updated_hash = site.data.last_commit.hash | default: site.last_commit_hash %}
+      {%- assign updated_branch = site.data.last_commit.branch | default: site.last_commit_branch %}
+      {%- comment %} AzerothCore's own revision line ends with a platform
+      tag - "(Win64, RelWithDebInfo, Dynamic)" - sourced from a compile-time
+      macro, not git, so it still prints even in AC's own non-git/source-
+      tarball fallback (unknown hash, "Archived" branch - see genrev.cmake).
+      Same idea here: updated_os falls through the exact same two data
+      sources as everything else above, but is never gated on updated_hash
+      existing (see where it's actually printed, below) - it should still
+      show up on a plain downloaded/extracted copy with no .git directory
+      at all, not just when the commit lookup above succeeded. {% endcomment %}
+      {%- assign updated_os = site.data.last_commit.os | default: site.host_os %}
+      {%- comment %} Server start time is deliberately separate from
+      updated_time above: updated_time is when the displayed revision was
+      committed (can be hours/days old), server_start is when THIS Jekyll
+      process actually started (written by start-jekyll.bat alongside the
+      commit info, right before `jekyll serve` runs). Falls back to
+      site.time (build time) when there's no start-jekyll.bat step, i.e.
+      CI/production, where "server start" ~= "build time" anyway. {% endcomment %}
+      {%- assign server_start = site.data.last_commit.server_start | default: site.time %}
+      {%- comment %} Local and self-hosted builds only: on GitHub Pages the revision line is in the footer instead
+      ("Hosted on GitHub Pages.", see footer.html; site.github_pages_build comes from _plugins/last_commit.rb). {% endcomment %}
+      {%- unless site.github_pages_build %}
+      <span class="site-header__updated" title="When this site's content was last committed">
+        {%- comment %} Title and commit detail share ONE line now -
+        "<game> - Database Revision:" followed inline by the actual
+        hash/date/time/branch, both at the same font-size (see
+        .site-header__updated-title / -detail in home.scss) so neither
+        reads as more or less important than the other. The date/time
+        portion is server-rendered in the commit's OWN timezone (git's
+        %cI offset, e.g. "+0100") - not necessarily whoever's actually
+        looking at the page. Same "show a sensible default server-side,
+        then swap to the viewer's own local time client-side" approach as
+        #gm-reset-time (footer.html): its data-commit-epoch (seconds
+        since the Unix epoch) lets #site-header-commit-time (footer.html)
+        replace the visible text with local time once the page loads; its
+        title attribute keeps the original commit-timezone value one
+        hover away as a reference point, and doubles as the fallback text
+        if that script doesn't run at all - JS disabled, or Date parsing
+        fails - since Liquid already rendered the real value here either
+        way. {% endcomment %}
+        <span class="site-header__updated-line1">
+          <span class="site-header__updated-title">{{ site.game.name }} - Database Revision:</span>
+          <span class="site-header__updated-detail">{% if updated_hash %}<strong>{{ updated_hash }}</strong> {% endif %}<span class="site-header__updated-datetime" data-commit-epoch="{{ updated_time | date: '%s' }}" title="{{ updated_time | date: '%d-%m-%Y | %H:%M:%S %z' }}">{{ updated_time | date: "%d-%m-%Y" }} | {{ updated_time | date: "%H:%M:%S %z" }}</span>{% if updated_branch %} ({{ updated_branch }} branch){% endif %}{% if updated_os %} ({{ updated_os }}){% endif %}</span>
+        </span>
+        {%- comment %} Live "time since server start" counter, PLUS a
+        nested "time since last regenerate" - see #site-header-uptime in
+        footer.html. Two different clocks: data-start-epoch is when THIS
+        Jekyll process actually started (server_start, same as before),
+        data-regen-epoch is site.time - Jekyll's own build timestamp,
+        which gets reset to "now" on every regeneration in --watch mode
+        (any file save), not just on server start. Both are seconds since
+        the Unix epoch (Liquid's date "%s"); the script does its own
+        Date.now() math client-side for each so they keep ticking
+        independently without any server involvement. Escalating format
+        (seconds only -> +minutes -> +hours -> +days) matches how the
+        field was asked for. Plain text (no wrapping parens/brackets), own
+        line below the combined title/detail line - the green color alone
+        is what marks it as "live status" distinct from that static line
+        above. {% endcomment %}
+        <span class="site-header__updated-uptime" data-start-epoch="{{ server_start | date: '%s' }}" data-regen-epoch="{{ site.time | date: '%s' }}">calculating uptime&hellip;</span>
+      </span>
+      {%- endunless %}
+      <a class="site-header__logo" href="{{ '/' | relative_url }}">
+        <span class="site-header__logo-cog">&#9881;</span>
+        <span class="site-header__logo-text">{{ site.game.name }} <em>Database</em></span>
+      </a>
+      <button type="button" class="site-header__expand" aria-label="Show navigation">&#9776; Menu</button>
+      <label for="nav-toggle" class="site-nav__toggle-label" aria-label="Toggle navigation">
+        <span></span><span></span><span></span>
+      </label>
+    </div>
+    <input type="checkbox" id="nav-toggle" class="site-nav__toggle" />
+    <nav class="site-nav" aria-label="Main navigation">
+      {%- for group in site.nav_groups %}
+      {%- assign group_size = group.sections | size %}
+      <div class="site-nav__group site-nav__group--n{{ group_size }}">
+        {%- for section in group.sections %}
+        {%- assign section_path = section.url | relative_url %}
+        {%- assign section_page = site.pages | where: "url", section.url | first %}
+        {%- if section_page.coming_soon %}
+        {%- comment %} There's no headroom above the header for a tooltip to
+        open upward without covering the logo, and a top-row item's own
+        row is too tight below it too (the bottom row sits right there) -
+        so every nav tooltip opens downward, below the whole nav bar
+        (see #page-soon-tips in footer.html, which positions it there). {% endcomment %}
+        <span class="site-nav__link site-nav__link--soon" tabindex="0">{{ section.title }}<span class="soon-tip soon-tip--below">Coming soon</span></span>
+        {%- else %}
+        <a class="site-nav__link{% if page.url contains section.url %} site-nav__link--active{% endif %}" href="{{ section_path }}">{{ section.title }}</a>
+        {%- endif %}
+        {%- endfor %}
+      </div>
+      {%- unless forloop.last %}<span class="site-nav__divider" aria-hidden="true"></span>{% endunless %}
+      {%- endfor %}
+      <span class="site-nav__divider" aria-hidden="true"></span>
+      {%- comment %} Guides/Tools/Theme as their own 2x2 group, same
+      site-nav__group grid every other nav group above already uses (see
+      the site.nav_groups loop) rather than three bare .site-nav__link
+      siblings dropped straight into .site-nav - that's what put Theme on
+      the same single row as Guides/Tools instead of its own row below
+      them. .site-nav__group's own default (repeat(2, 1fr)) already lays
+      3 items out as Guides+Tools on row 1 and Theme alone on row 2, col 1
+      - exactly this 2x2 shape - without a dedicated column override the
+      way the 2-item groups need --n2 to force single-column stacking
+      instead. --gtt IS still needed though, just for row-gap: this is the
+      only group on the site with just one item on its second row, so a
+      lonely Theme button sitting almost flush under Guides read as
+      cramped/misaligned in a way the denser 4-item groups above don't -
+      see .site-nav__group--gtt in home.scss. {% endcomment %}
+      <div class="site-nav__group site-nav__group--gtt">
+        {%- assign guides_page = site.pages | where: "url", "/guides/" | first %}
+        {%- if guides_page.coming_soon %}
+        <span class="site-nav__link site-nav__link--guides site-nav__link--soon" tabindex="0">Guides<span class="soon-tip soon-tip--below">Coming soon</span></span>
+        {%- else %}
+        <a class="site-nav__link site-nav__link--guides{% if page.url contains '/guides/' %} site-nav__link--guides-active{% endif %}" href="{{ '/guides/' | relative_url }}">Guides</a>
+        {%- endif %}
+        {%- assign tools_page = site.pages | where: "url", "/tools/" | first %}
+        {%- if tools_page %}
+        <a class="site-nav__link site-nav__link--tools{% if page.url contains '/tools/' %} site-nav__link--tools-active{% endif %}" href="{{ '/tools/' | relative_url }}">Tools</a>
+        {%- endif %}
+        {%- comment %} Site-wide theme picker. Each swatch's FULL data - accent,
+        categories, rarity, traits, whatever else a theme file defines - comes
+        straight from _data/themes/<slug>.yml as one jsonify'd blob (data-theme
+        below), not individual data-theme-* attributes, specifically so adding
+        a new field to a theme's schema never needs a matching markup change
+        here. See _data/themes/README.md for the full system (the schema,
+        how #site-theme-switcher in footer.html consumes data-theme for
+        hover-preview / click-to-select / localStorage+URL persistence, and how
+        to add a new theme). THEME_ORDER below is the one place display order
+        is decided - site.data.themes itself is just a flat, unordered folder
+        of files. {% endcomment %}
+        {%- assign theme_order = site.theme_order | default: "default" | split: "," %}
+        <div class="theme-picker" id="theme-picker">
+          <button type="button" class="site-nav__link site-nav__link--theme" id="theme-picker-toggle" aria-haspopup="true" aria-expanded="false">
+            Theme
+          </button>
+          <div class="theme-picker__panel" id="theme-picker-panel" role="menu" aria-hidden="true">
+            {%- for slug in theme_order %}
+            {%- assign theme = site.data.themes[slug] %}
+            {%- if theme %}
+            <button type="button" class="theme-picker__swatch" role="menuitemradio" aria-checked="false" data-theme-slug="{{ slug }}" data-theme-name="{{ theme.name }}" data-theme="{{ theme | jsonify | escape }}" style="--swatch-color: {{ theme.accent }};">
+              <span class="theme-picker__swatch-color" aria-hidden="true"></span>
+              <span class="theme-picker__swatch-name">{{ theme.name }}</span>
+            </button>
+            {%- endif %}
+            {%- endfor %}
+          </div>
+        </div>
+      </div>
+    </nav>
+  </div>
+</header>

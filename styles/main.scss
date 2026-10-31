@@ -1,0 +1,3059 @@
+---
+---
+@import "variables";
+
+// ── Reset / Base ──────────────────────────────────────────────────────────
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  font-size: $font-size-base;
+  scroll-behavior: smooth;
+  // The whole site is dark-themed, but without this the browser still
+  // assumes a light UI for anything it renders itself - number input spin
+  // buttons, <select> dropdown popups, checkboxes, date/time pickers - so
+  // those show up as stark white boxes against every dark panel they sit
+  // in (see e.g. the Map Calibrator's Zoom/Dot size number inputs). This
+  // tells the browser the page IS dark, so it draws its own native
+  // controls in their dark variant everywhere by default, instead of that
+  // needing a manual background/border override on every single input.
+  color-scheme: dark;
+
+  // Slim, theme-colored scrollbar as the site-wide default, same red-
+  // accent treatment already used for specific scroll panels (Map
+  // Calibrator viewport, tooltip lists, etc.) - this just makes that the
+  // default everywhere instead of a one-off per-element override, so any
+  // scrollable area that doesn't have its own explicit accent color still
+  // gets a themed scrollbar instead of the browser's default light one.
+  // scrollbar-width/-color cover Firefox; the universal ::-webkit-
+  // scrollbar-* rules below cover Chrome/Edge/Safari (which need the
+  // pseudo-element declared per scrolling element, not just on html).
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--site-accent) 50%, transparent) $color-surface;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: $color-surface;
+}
+*::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--site-accent) 50%, transparent);
+  border-radius: 4px;
+  border: 2px solid $color-surface;
+
+  &:hover { background: color-mix(in srgb, var(--site-accent) 80%, transparent); }
+}
+
+body {
+  font-family: $font-sans;
+  background: $color-bg;
+  color: $color-text;
+  line-height: 1.65;
+  min-height: 100vh;
+}
+
+a {
+  color: var(--site-accent);
+  text-decoration: none;
+  transition: color $transition-fast;
+  &:hover { color: color-mix(in srgb, var(--site-accent), white 15%); }
+}
+
+img { max-width: 100%; display: block; }
+
+h1, h2, h3 { line-height: 1.2; }
+
+// ── Utility ───────────────────────────────────────────────────────────────
+.u-inner {
+  max-width: $max-width;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+// ── Site shell ────────────────────────────────────────────────────────────
+.site {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.site-content {
+  flex: 1;
+}
+
+// ── Header ────────────────────────────────────────────────────────────────
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba($color-surface, 0.95);
+  backdrop-filter: blur(8px);
+  border-bottom: 2px solid var(--site-accent);
+}
+
+.site-header__inner {
+  max-width: $max-width;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  height: $header-height;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.site-header__logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: $color-white;
+  font-size: $font-size-large;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+
+  &:hover { color: $color-white; }
+
+  em {
+    font-style: normal;
+    color: var(--site-accent);
+  }
+}
+
+.site-header__logo-cog {
+  font-size: 1.5rem;
+  color: var(--site-accent);
+}
+
+.site-header__nav {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.site-header__nav-link {
+  color: $color-text-muted;
+  font-size: $font-size-small;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: color $transition-fast;
+
+  &:hover, &.is-active {
+    color: $color-white;
+  }
+
+  &.is-active {
+    border-bottom: 2px solid var(--site-accent);
+    padding-bottom: 2px;
+  }
+}
+
+// ── Footer ────────────────────────────────────────────────────────────────
+.site-footer {
+  background: $color-surface;
+  border-top: 1px solid $color-border;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.site-footer__inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+}
+
+// GitHub Pages builds: "Hosted on GitHub Pages." and the revision line, centered under the footer row
+.site-footer__revision {
+  margin-top: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: $font-size-small;
+  color: $color-text-muted;
+
+  a { color: var(--site-accent); }
+}
+
+.site-footer__copy {
+  font-size: $font-size-small;
+  color: $color-text-muted;
+}
+
+.site-footer__export {
+  padding: 0.3rem 0.7rem;
+  background: transparent;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  color: $color-text-muted;
+  font: inherit;
+  font-size: $font-size-small;
+  cursor: pointer;
+  transition: color $transition-fast, border-color $transition-fast;
+
+  &:hover { color: $color-white; border-color: $color-text-muted; }
+  &:disabled { opacity: 0.6; cursor: wait; }
+}
+
+// ── Hero (homepage) ───────────────────────────────────────────────────────
+.home-hero {
+  background:
+    linear-gradient(180deg, rgba($color-bg, 0) 0%, $color-bg 100%),
+    linear-gradient(135deg, color-mix(in srgb, var(--site-accent-dark), black 10%) 0%, $color-bg 60%);
+  padding: 5rem 1.5rem 3rem;
+  text-align: center;
+}
+
+.home-hero__eyebrow {
+  font-size: $font-size-small;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--site-accent);
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.home-hero__title {
+  font-size: clamp(2rem, 6vw, $font-size-3xl);
+  font-family: $font-display;
+  font-weight: 900;
+  color: $color-white;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 1rem;
+}
+
+.home-hero__subtitle {
+  font-size: $font-size-large;
+  color: $color-text-muted;
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+// ── Class Grid (/classes/) ─────────────────────────────────────────────────
+// Wider than every other page's $max-width - each card's Weapons row now
+// stacks one sub-row per tier (Grenade/Pistol/tier-20/tier-40, see
+// .class-card-thumb__weapon-groups below) instead of letting all of a
+// class's weapons wrap together, and some classes carry 2 same-tier
+// weapons with long names (e.g. Veteran/Brawler's Lancer + Gnasher
+// Shotgun, both tier-20) that need real room to both fit on one line.
+// $classes-page-max-width is its own variable (not a wider value for the
+// shared $max-width itself) specifically so nothing else on the site gets
+// pulled wider along with it.
+$classes-page-max-width: 1600px;
+
+.classes-page {
+  max-width: $classes-page-max-width;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+// Category section box
+.classes-section {
+  border: 1px solid var(--cat-color-dark, #{$color-border});
+  border-radius: $radius-lg;
+  // No overflow:hidden here on purpose (it used to clip the header's
+  // background to these rounded corners) - it would also clip an open
+  // badge tooltip in the grid below, which needs to spill outside this
+  // box. The header rounds its own top corners instead (below).
+  background: linear-gradient(180deg, var(--cat-color-dim) 0%, transparent 60%);
+}
+
+.classes-section__header {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(90deg, var(--cat-color-dim, rgba(0,0,0,0.35)) 0%, rgba(0,0,0,0.35) 100%);
+  border-bottom: 2px solid var(--cat-color, #{$color-border});
+  border-radius: $radius-lg $radius-lg 0 0;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.classes-section__title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: $font-size-xlarge;
+  color: $color-white;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.classes-section__title-text {
+  color: $color-white;
+}
+
+.classes-section__title-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.08);
+  color: $color-text-muted;
+  font-size: $font-size-small;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 0.1rem 0.6rem;
+  letter-spacing: 0;
+}
+
+.classes-section__body {
+  padding: 1.5rem;
+}
+
+// Class Grid - one row per category, always. Every card is sized as if its
+// row always had 5 classes (the size of the biggest categories, Assault/
+// Tank/Support) - Promotional (only 4 classes) gets cards at that exact
+// same width instead of stretching wider to fill its row, and because this
+// uses flex (not grid) rather than leaving the leftover 5th slot as empty
+// space on the right, `justify-content: center` centers the 4 actual cards
+// as a group in the middle of the row.
+$classes-grid-gap: 0.75rem;
+$classes-grid-cols: 5;
+
+.classes-grid {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: center;
+  gap: $classes-grid-gap;
+}
+
+.class-card-thumb {
+  position: relative; // anchors the stretched-link overlay below
+  z-index: 0;          // explicit stacking context, so it can be raised above the row below when a tooltip is open
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  // Basis = width of 1 of 5 equal columns (matching .classes-grid's own
+  // gap above) - flex-grow:0 so a short row (Promotional) doesn't stretch
+  // its cards to fill the leftover space, flex-shrink:1 so a full 5-card
+  // row can still shrink together on narrow viewports instead of overflowing.
+  flex: 0 1 calc((100% - #{$classes-grid-cols - 1} * #{$classes-grid-gap}) / #{$classes-grid-cols});
+  min-width: 0;        // let it shrink below its content's natural size instead of overflowing the row
+  max-width: 375px;    // still caps out at a comfortable size if the row has room to spare
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: 1.25rem 0.85rem;
+  text-decoration: none;
+  color: $color-text;
+  transition: border-color $transition-fast, transform $transition-fast, box-shadow $transition-fast;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--cat-color, var(--site-accent));
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px var(--cat-color-dim, rgba(140,109,18,0.2));
+    color: $color-white;
+  }
+
+  // A card whose tooltip is open (or focused) needs to paint above the
+  // cards in the row below it, otherwise its dropdown tooltip gets covered.
+  &:hover,
+  &:focus-within,
+  &:has(.info-badge.is-open) {
+    z-index: 5;
+  }
+}
+
+// The card is a <div>, not an <a>, specifically so badge tooltips can safely
+// contain real <a> cross-reference links (nesting a real <a> inside the old
+// whole-card <a> is invalid HTML and made browsers split the card in two).
+// This invisible link covers the whole card and does the navigating instead;
+// badges sit above it (z-index) so their own clicks/tooltips still work.
+.class-card-thumb__link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+$hex-clip: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+
+.class-card-thumb__icon {
+  width: 96px;
+  height: 96px;
+  clip-path: $hex-clip;
+  object-fit: cover;
+  object-position: center;
+  margin: 0 auto 0.75rem;
+  display: block;
+}
+
+.class-card-thumb__placeholder {
+  width: 96px;
+  height: 96px;
+  clip-path: $hex-clip;
+  background: var(--cat-color-dim, #{$color-surface-2});
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.25rem;
+  font-weight: 900;
+  color: var(--cat-color, var(--site-accent));
+  margin: 0 auto 0.75rem;
+  font-family: $font-display;
+}
+
+.class-card-thumb__name {
+  font-size: $font-size-medium;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+// Visible spacer between Name / Weapons / Traits on a class-grid card - same
+// hairline treatment as .classes-filter__divider above the filter chips,
+// just narrower so it reads as a break inside one card rather than a
+// full-width section rule.
+.class-card-thumb__divider {
+  width: 60%;
+  height: 1px;
+  background: $color-border;
+  margin: 0.6rem auto;
+}
+
+// ── Engineer badge (Mechanic / Robotics Expert / Architect) ──────────────
+.engineer-badge {
+  position: relative;
+  display: inline-block;
+  margin-top: 0.35rem;
+  padding: 0.2rem 0.65rem;
+  font-size: $font-size-small;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #7ee787;
+  background: rgba(46, 160, 67, 0.15);
+  border: 1px solid rgba(46, 160, 67, 0.55);
+  border-radius: $radius-sm;
+  cursor: help;
+
+  .engineer-badge__tip {
+    position: absolute;
+    left: 0;
+    top: calc(100% + 10px);
+    // width:auto here would shrink-to-fit against the *badge's* own narrow
+    // width (its nearest positioned ancestor), not the page - max-content
+    // sizes it to its actual text instead, up to the max-width cap below.
+    width: max-content;
+    max-width: min(280px, calc(100vw - 2rem));
+    overflow-wrap: break-word;
+    padding: 0.7rem 0.9rem;
+    font-size: $font-size-small;
+    line-height: 1.5;
+    font-weight: 400;
+    letter-spacing: normal;
+    text-transform: none;
+    text-align: left;
+    color: $color-text;
+    background: linear-gradient(180deg, lighten($color-surface-2, 3%), $color-surface-2);
+    border: 1px solid $color-border;
+    border-top: 2px solid rgba(46, 160, 67, 0.7);
+    border-radius: $radius-md;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity $transition-fast;
+    z-index: 10;
+
+    &::after {
+      content: 'Click to keep open';
+      display: block;
+      margin-top: 0.5rem;
+      padding-top: 0.4rem;
+      border-top: 1px solid rgba($color-white, 0.08);
+      font-size: 0.7rem;
+      font-style: italic;
+      color: $color-text-muted;
+    }
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: calc(100% + 3px);
+    border: 5px solid transparent;
+    border-bottom-color: $color-border;
+    opacity: 0;
+    transition: opacity $transition-fast;
+    z-index: 10;
+  }
+
+  &:hover .engineer-badge__tip,
+  &:focus .engineer-badge__tip,
+  &.is-open .engineer-badge__tip {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  &:hover::before,
+  &:focus::before,
+  &.is-open::before {
+    opacity: 1;
+  }
+
+  &.is-open .engineer-badge__tip::after {
+    content: 'Click to close';
+  }
+}
+
+// ── Hidden trait badge (undocumented mechanics, class or card level) ─────
+.hidden-badge {
+  position: relative;
+  display: inline-block;
+  margin-top: 0.35rem;
+  padding: 0.2rem 0.65rem;
+  font-size: $font-size-small;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #d9a8ff;
+  background: rgba($color-stealth, 0.15);
+  border: 1px solid rgba($color-stealth, 0.55);
+  border-radius: $radius-sm;
+  cursor: help;
+
+  .hidden-badge__tip {
+    position: absolute;
+    left: 0;
+    top: calc(100% + 10px);
+    // width:auto here would shrink-to-fit against the *badge's* own narrow
+    // width (its nearest positioned ancestor), not the page - max-content
+    // sizes it to its actual text instead, up to the max-width cap below.
+    width: max-content;
+    max-width: min(280px, calc(100vw - 2rem));
+    overflow-wrap: break-word;
+    padding: 0.7rem 0.9rem;
+    font-size: $font-size-small;
+    line-height: 1.5;
+    font-weight: 400;
+    letter-spacing: normal;
+    text-transform: none;
+    text-align: left;
+    color: $color-text;
+    background: linear-gradient(180deg, lighten($color-surface-2, 3%), $color-surface-2);
+    border: 1px solid $color-border;
+    border-top: 2px solid rgba($color-stealth, 0.7);
+    border-radius: $radius-md;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity $transition-fast;
+    z-index: 10;
+
+    &::after {
+      content: 'Click to keep open';
+      display: block;
+      margin-top: 0.5rem;
+      padding-top: 0.4rem;
+      border-top: 1px solid rgba($color-white, 0.08);
+      font-size: 0.7rem;
+      font-style: italic;
+      color: $color-text-muted;
+    }
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: calc(100% + 3px);
+    border: 5px solid transparent;
+    border-bottom-color: $color-border;
+    opacity: 0;
+    transition: opacity $transition-fast;
+    z-index: 10;
+  }
+
+  &:hover .hidden-badge__tip,
+  &:focus .hidden-badge__tip,
+  &.is-open .hidden-badge__tip {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  &:hover::before,
+  &:focus::before,
+  &.is-open::before {
+    opacity: 1;
+  }
+
+  &.is-open .hidden-badge__tip::after {
+    content: 'Click to close';
+  }
+}
+
+.class-card__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.class-card__hidden {
+  margin-top: 0;
+  flex-shrink: 0;
+
+  .hidden-badge__tip {
+    left: auto;
+    right: 0;
+    text-align: left;
+  }
+
+  &::before {
+    left: auto;
+    right: 12px;
+  }
+}
+
+// ── Badge row on class grid cards (Engineer + trait badges together) ────────
+// Badges keep their full label - never truncated. As many fit per row as
+// the card is wide; anything that doesn't fit wraps to a new row below,
+// growing the card downward instead of shrinking/clipping badge text.
+.class-card-thumb__badges {
+  position: relative; // stack above .class-card-thumb__link
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.3rem;
+  // No margin-top here - the .class-card-thumb__divider immediately above
+  // this element already supplies that spacing (margin: 0.6rem auto on
+  // both sides), so an additional top margin here would just double it up.
+  min-width: 0;             // let it shrink along with the card
+
+  .engineer-badge,
+  .trait-badge {
+    margin-top: 0;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.02em;
+    flex: 0 0 auto;   // size to its own label, don't force-share the row width
+    max-width: 100%;  // a single badge wider than the card still wraps its own text rather than overflowing
+  }
+}
+
+// The visible text inside a badge - wraps onto multiple lines within its own
+// badge pill if the label is wider than the card, rather than truncating.
+.badge__label {
+  display: block;
+  white-space: normal;
+  overflow-wrap: break-word;
+  text-align: center;
+}
+
+// ── Trait badges (Ammo Regen, Explosive Ammo Regen, Bleeding, Invisibility) ─
+.trait-badge {
+  // --trait-color/-bg/-border are set per modifier below from
+  // --theme-trait-<key>-color/-base (:root, further down this file) - those
+  // two are what #site-theme-switcher actually rewrites at runtime from the
+  // active theme's traits: block. -color is the badge's own (already
+  // legible-on-dark) text color; -base is the more saturated color -bg/
+  // -border tint from via color-mix() - kept separate because for several
+  // traits the readable text color is a lightened variant of a punchier
+  // base tone, not the same value twice (see _data/themes/README.md).
+  --trait-color: var(--theme-trait-default-color);
+  --trait-bg: color-mix(in srgb, var(--theme-trait-default-base) 15%, transparent);
+  --trait-border: color-mix(in srgb, var(--theme-trait-default-base) 55%, transparent);
+
+  position: relative;
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  font-size: $font-size-small;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--trait-color);
+  background: var(--trait-bg);
+  border: 1px solid var(--trait-border);
+  border-radius: $radius-sm;
+  cursor: help;
+
+  .trait-badge__tip {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: calc(100% + 10px);
+    // width:auto here would shrink-to-fit against the *badge's* own narrow
+    // width (its nearest positioned ancestor), not the page - max-content
+    // sizes it to its actual text instead, up to the max-width cap below.
+    width: max-content;
+    max-width: min(280px, calc(100vw - 2rem));
+    overflow-wrap: break-word;
+    padding: 0.7rem 0.9rem;
+    font-size: $font-size-small;
+    line-height: 1.5;
+    font-weight: 400;
+    letter-spacing: normal;
+    text-transform: none;
+    text-align: left;
+    color: $color-text;
+    background: linear-gradient(180deg, lighten($color-surface-2, 3%), $color-surface-2);
+    border: 1px solid $color-border;
+    border-top: 2px solid var(--trait-border);
+    border-radius: $radius-md;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity $transition-fast;
+    z-index: 10;
+
+    &::after {
+      content: 'Click to keep open';
+      display: block;
+      margin-top: 0.5rem;
+      padding-top: 0.4rem;
+      border-top: 1px solid rgba($color-white, 0.08);
+      font-size: 0.7rem;
+      font-style: italic;
+      color: $color-text-muted;
+    }
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: calc(100% + 3px);
+    border: 5px solid transparent;
+    border-bottom-color: $color-border;
+    opacity: 0;
+    transition: opacity $transition-fast;
+    z-index: 10;
+  }
+
+  &:hover .trait-badge__tip,
+  &:focus .trait-badge__tip,
+  &.is-open .trait-badge__tip {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  &:hover::before,
+  &:focus::before,
+  &.is-open::before {
+    opacity: 1;
+  }
+
+  &.is-open .trait-badge__tip::after {
+    content: 'Click to close';
+  }
+
+  &--repairing {
+    --trait-color: var(--theme-trait-repairing-color);
+    --trait-bg: color-mix(in srgb, var(--theme-trait-repairing-base) 15%, transparent);
+    --trait-border: color-mix(in srgb, var(--theme-trait-repairing-base) 55%, transparent);
+  }
+
+  &--ammo-regeneration {
+    --trait-color: var(--theme-trait-ammo-regeneration-color);
+    --trait-bg: color-mix(in srgb, var(--theme-trait-ammo-regeneration-base) 15%, transparent);
+    --trait-border: color-mix(in srgb, var(--theme-trait-ammo-regeneration-base) 55%, transparent);
+  }
+
+  &--explosive-ammo-regeneration {
+    --trait-color: var(--theme-trait-explosive-ammo-regeneration-color);
+    --trait-bg: color-mix(in srgb, var(--theme-trait-explosive-ammo-regeneration-base) 15%, transparent);
+    --trait-border: color-mix(in srgb, var(--theme-trait-explosive-ammo-regeneration-base) 55%, transparent);
+  }
+
+  &--bleeding {
+    --trait-color: var(--theme-trait-bleeding-color);
+    --trait-bg: color-mix(in srgb, var(--theme-trait-bleeding-base) 15%, transparent);
+    --trait-border: color-mix(in srgb, var(--theme-trait-bleeding-base) 55%, transparent);
+  }
+
+  &--invisibility {
+    --trait-color: var(--theme-trait-invisibility-color);
+    --trait-bg: color-mix(in srgb, var(--theme-trait-invisibility-base) 15%, transparent);
+    --trait-border: color-mix(in srgb, var(--theme-trait-invisibility-base) 55%, transparent);
+  }
+
+  &--marking {
+    --trait-color: var(--theme-trait-marking-color);
+    --trait-bg: color-mix(in srgb, var(--theme-trait-marking-base) 15%, transparent);
+    --trait-border: color-mix(in srgb, var(--theme-trait-marking-base) 55%, transparent);
+  }
+
+  &--freeze {
+    --trait-color: var(--theme-trait-freeze-color);
+    --trait-bg: color-mix(in srgb, var(--theme-trait-freeze-base) 15%, transparent);
+    --trait-border: color-mix(in srgb, var(--theme-trait-freeze-base) 55%, transparent);
+  }
+
+  &--shield {
+    --trait-color: var(--theme-trait-shield-color);
+    --trait-bg: color-mix(in srgb, var(--theme-trait-shield-base) 15%, transparent);
+    --trait-border: color-mix(in srgb, var(--theme-trait-shield-base) 55%, transparent);
+  }
+
+  &--summon {
+    --trait-color: var(--theme-trait-summon-color);
+    --trait-bg: color-mix(in srgb, var(--theme-trait-summon-base) 15%, transparent);
+    --trait-border: color-mix(in srgb, var(--theme-trait-summon-base) 55%, transparent);
+  }
+
+  &--melee {
+    --trait-color: var(--theme-trait-melee-color);
+    --trait-bg: color-mix(in srgb, var(--theme-trait-melee-base) 15%, transparent);
+    --trait-border: color-mix(in srgb, var(--theme-trait-melee-base) 55%, transparent);
+  }
+
+  &--stim {
+    --trait-color: var(--theme-trait-stim-color);
+    --trait-bg: color-mix(in srgb, var(--theme-trait-stim-base) 15%, transparent);
+    --trait-border: color-mix(in srgb, var(--theme-trait-stim-base) 55%, transparent);
+  }
+}
+
+// ── Weapons rows on class grid cards ──────────────────────────────────────────
+// Sits between the class name and the trait badges (.class-card-thumb__name,
+// .class-card-thumb__badges). One class can carry weapons from more than one
+// Forge-cost tier (e.g. a Pistol AND a tier-20 rifle) - .weapon-groups stacks
+// one .class-card-thumb__weapons row PER TIER instead of wrapping all of a
+// class's weapons into a single flex-wrap list, so different-colored tiers
+// never end up sharing a line together. Each individual tier row still wraps
+// to a 2nd line on its own if it doesn't fit (same as the trait badge row) -
+// this only keeps DIFFERENT tiers from mixing, not from ever wrapping.
+.class-card-thumb__weapon-groups {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+// The visible .class-card-thumb__divider immediately above .weapon-groups
+// (and above .class-card-thumb__badges below it) is what actually spaces
+// this whole block from its neighbors, not a margin here.
+.class-card-thumb__weapons {
+  position: relative; // stack above .class-card-thumb__link, same as __badges
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+// Plain (non-interactive - no tooltip, no cursor: help) pill, colored by the
+// same Forge-cost tier grouping as the Weapons filter chips above
+// (classes-filter__chip--wtier-*), so a class's loadout reads at a glance
+// against colors a visitor already learned from that panel: orange grenade,
+// cyan pistol, green tier-20, red tier-40.
+.weapon-badge {
+  --wpn-color: #{$color-gold};
+  --wpn-bg: rgba(212, 160, 23, 0.15);
+  --wpn-border: rgba(212, 160, 23, 0.55);
+
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--wpn-color);
+  background: var(--wpn-bg);
+  border: 1px solid var(--wpn-border);
+  border-radius: $radius-sm;
+  flex: 0 0 auto;
+  max-width: 100%;
+
+  &--wtier-grenade {
+    --wpn-color: #ff8f3c;
+    --wpn-bg: rgba(255, 143, 60, 0.15);
+    --wpn-border: rgba(255, 143, 60, 0.55);
+  }
+
+  &--wtier-pistol {
+    --wpn-color: #5fd4e0;
+    --wpn-bg: rgba(95, 212, 224, 0.15);
+    --wpn-border: rgba(95, 212, 224, 0.55);
+  }
+
+  &--wtier-20 {
+    --wpn-color: #7ee787;
+    --wpn-bg: rgba(46, 160, 67, 0.15);
+    --wpn-border: rgba(46, 160, 67, 0.55);
+  }
+
+  &--wtier-40 {
+    --wpn-color: #ff6b6b;
+    --wpn-bg: rgba(255, 107, 107, 0.15);
+    --wpn-border: rgba(255, 107, 107, 0.55);
+  }
+}
+
+// ── Classes page filter bar ──────────────────────────────────────────────────
+// Collapsed by default (plain <details>, no [open] attribute in the markup) -
+// the wrapper carries the same width/centering the old .classes-filter used
+// to own outright, since that's now the inner panel that only exists in the
+// DOM's visible flow while expanded.
+.classes-filter-collapse {
+  // width:100% (not just max-width) because <details> doesn't reliably
+  // honor align-items:stretch from the .classes-page flex column in every
+  // browser - without it, the box shrinks to fit just the "Filters" summary
+  // and the leftover auto margins visually center it instead of pinning it
+  // to the left like every other section on the page.
+  width: 100%;
+  max-width: $classes-page-max-width;
+  margin: 0 auto 1.5rem;
+  padding: 0 1.5rem;
+  text-align: left;
+}
+
+.classes-filter-collapse__summary {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  font-size: $font-size-medium;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: $color-text;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  text-align: left;
+
+  &::-webkit-details-marker { display: none; }
+
+  &::before {
+    content: '\25B8';
+    display: inline-block;
+    color: $color-gold;
+    transition: transform $transition-fast;
+  }
+
+  &:hover { color: $color-gold; }
+}
+
+.classes-filter-collapse[open] > .classes-filter-collapse__summary::before {
+  transform: rotate(90deg);
+}
+
+// ── Classes page "Level Progress" toggle ─────────────────────────────────
+// Same collapsed-by-default <details> treatment as the Filters panel right
+// above it, just under its own class names so neither can accidentally
+// pick up the other's CSS if one changes later.
+.level-progress-collapse {
+  width: 100%;
+  max-width: $classes-page-max-width;
+  margin: 0 auto 1.5rem;
+  padding: 0 1.5rem;
+  text-align: left;
+}
+
+.level-progress-collapse__summary {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  font-size: $font-size-medium;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: $color-text;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  text-align: left;
+
+  &::-webkit-details-marker { display: none; }
+
+  &::before {
+    content: '\25B8';
+    display: inline-block;
+    color: $color-gold;
+    transition: transform $transition-fast;
+  }
+
+  &:hover { color: $color-gold; }
+}
+
+.level-progress-collapse[open] > .level-progress-collapse__summary::before {
+  transform: rotate(90deg);
+}
+
+.level-progress-panel {
+  padding-top: 0.75rem;
+}
+
+.classes-filter {
+  padding-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.classes-filter__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.classes-filter__divider {
+  height: 1px;
+  background: $color-border;
+  margin: 0.15rem 0;
+}
+
+.classes-filter__label {
+  font-size: $font-size-small;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: $color-text-muted;
+  margin-right: 0.25rem;
+}
+
+.classes-filter__explicit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: $font-size-small;
+  color: $color-text-muted;
+  cursor: pointer;
+  margin-right: 0.4rem;
+  user-select: none;
+
+  &:hover { color: $color-text; }
+
+  input {
+    accent-color: $color-gold;
+    cursor: pointer;
+  }
+}
+
+.classes-filter__chip {
+  // Colored per trait below via modifier classes - matches that trait's own
+  // badge color on the cards, so the chip is recognizable at a glance.
+  --chip-color: #{$color-text};
+  --chip-border: #{$color-border};
+
+  position: relative;
+  padding: 0.4rem 0.9rem;
+  font-size: $font-size-small;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--chip-color);
+  background: $color-surface;
+  border: 1px solid var(--chip-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color $transition-fast, color $transition-fast, background $transition-fast;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+
+  &:hover {
+    border-color: var(--chip-color);
+    color: $color-white;
+  }
+
+  &.is-active {
+    color: $color-bg;
+    background: var(--chip-color);
+    border-color: var(--chip-color);
+
+    .classes-filter__chip-count { color: $color-bg; }
+  }
+
+  // Explicit (AND) mode only: this chip can't be combined with what's
+  // already selected in its group without zeroing out every class, so it's
+  // greyed out and unclickable until the selection changes.
+  &.is-invalid {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+
+    &:hover {
+      border-color: var(--chip-border);
+      color: var(--chip-color);
+    }
+  }
+
+  &:hover .classes-filter__chip-tip,
+  &:focus-visible .classes-filter__chip-tip {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  &--weapon                { --chip-color: #{$color-gold}; --chip-border: rgba(212, 160, 23, 0.55); }
+  &--repairing             { --chip-color: #d9944f; --chip-border: rgba(217, 148, 79, 0.55); }
+
+  // Weapon chips are further colored by their Fabricator forge-cost tier
+  // (the base Forge Value to unlock level 1 - see the Fabricator page),
+  // rather than by weapon type - cheaper/common weapons vs. pricier heavy
+  // ordnance. Grenades and Pistols don't carry a Forge Value at all, so
+  // they're colored by slot type instead - Repair Tool counts as a Pistol
+  // here too (it occupies the pistol holster slot in-game).
+  &--wtier-grenade         { --chip-color: #ff8f3c; --chip-border: rgba(255, 143, 60, 0.55); }
+  &--wtier-pistol          { --chip-color: #5fd4e0; --chip-border: rgba(95, 212, 224, 0.55); }
+  &--wtier-20              { --chip-color: #7ee787; --chip-border: rgba(46, 160, 67, 0.55); }
+  &--wtier-30              { --chip-color: #f2994a; --chip-border: rgba(242, 153, 74, 0.55); }
+  &--wtier-40              { --chip-color: #ff6b6b; --chip-border: rgba(255, 107, 107, 0.55); }
+
+  &--engineer              { --chip-color: #7ee787; --chip-border: rgba(46, 160, 67, 0.55); }
+  &--ammo-regen            { --chip-color: #8ecbff; --chip-border: rgba(74, 158, 255, 0.55); }
+  &--explosive-ammo-regen  { --chip-color: #ffb066; --chip-border: rgba(255, 140, 40, 0.55); }
+  &--bleeding              { --chip-color: #ff8f8f; --chip-border: rgba(220, 50, 50, 0.55); }
+  &--invisibility          { --chip-color: #d9a8ff; --chip-border: rgba(180, 74, 255, 0.55); }
+  &--marking               { --chip-color: #f2c94c; --chip-border: rgba(242, 201, 76, 0.55); }
+  &--freeze                { --chip-color: #5fd4e0; --chip-border: rgba(95, 212, 224, 0.55); }
+  &--shield                { --chip-color: #a9bdd6; --chip-border: rgba(169, 189, 214, 0.55); }
+  &--summon                { --chip-color: #9f8cf0; --chip-border: rgba(159, 140, 240, 0.55); }
+  &--melee                 { --chip-color: #c98a4b; --chip-border: rgba(201, 138, 75, 0.55); }
+  &--stim                  { --chip-color: #4fdba0; --chip-border: rgba(79, 219, 160, 0.55); }
+
+  // Same purple as .hidden-badge (class hero pages / individual cards) for
+  // this exact "undocumented mechanic" concept, so the chip reads as the
+  // same thing at a glance. Custom property values aren't parsed as
+  // SassScript, so $color-stealth needs #{} interpolation here or Sass
+  // emits it as literal (invalid) text - that was the earlier bug that
+  // made this chip's border silently disappear.
+  &--hidden                { --chip-color: #d9a8ff; --chip-border: #{rgba($color-stealth, 0.55)}; }
+}
+
+.classes-filter__chip-count {
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  opacity: 0.7;
+}
+
+// Hover-only tooltip listing every class that chip actually matches. Not
+// wired into the click-to-pin .info-badge system elsewhere on the site -
+// a click on a filter chip has to toggle the filter, not open a tooltip.
+.classes-filter__chip-tip {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 8px);
+  transform: translate(-50%, -4px);
+  width: max-content;
+  max-width: min(320px, calc(100vw - 2rem));
+  padding: 0.6rem 0.8rem;
+  font-size: $font-size-small;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  line-height: 1.5;
+  text-align: left;
+  color: $color-text;
+  background: linear-gradient(180deg, lighten($color-surface-2, 3%), $color-surface-2);
+  border: 1px solid $color-border;
+  border-top: 2px solid var(--chip-color);
+  border-radius: $radius-md;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity $transition-fast, transform $transition-fast;
+  z-index: 20;
+}
+
+// Extra explanatory line under the class list, currently only used by the
+// "Hidden" chip's tooltip - same muted/italic/separated treatment as
+// .engineer-badge__tip's "Click to keep open" hint.
+.classes-filter__chip-tip-note {
+  display: block;
+  margin-top: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid rgba($color-white, 0.08);
+  font-size: 0.7rem;
+  font-style: italic;
+  color: $color-text-muted;
+}
+
+// Each class name inside the tooltip colored by its own category, matching
+// the same palette used for the section headers/accents further down the
+// page (.classes-section--*).
+.classes-filter__chip-tip-cls {
+  font-weight: 600;
+
+  &--assault     { color: #c62b0f; }
+  &--tank        { color: #4995ff; }
+  &--support     { color: #2fb740; }
+  &--promotional { color: #d856d5; }
+}
+
+.classes-filter__clear-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.classes-filter__clear {
+  font-size: $font-size-small;
+  color: $color-text-muted;
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0.4rem 0.5rem;
+  margin: -0.4rem -0.5rem;
+
+  &:hover { color: $color-white; }
+
+  &--all {
+    color: var(--site-accent);
+
+    &:hover { color: color-mix(in srgb, var(--site-accent), white 15%); }
+  }
+
+  // Dimmed (rather than hidden) when there's nothing to clear yet, so the
+  // three labels stay visible and in place at all times.
+  &.is-disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+
+.class-card-thumb.is-hidden-by-filter,
+.classes-section.is-hidden-by-filter {
+  display: none;
+}
+
+// ── Class Detail Page ─────────────────────────────────────────────────────
+.class-page__hero {
+  background:
+    linear-gradient(180deg, rgba($color-bg, 0) 0%, $color-bg 100%),
+    linear-gradient(135deg, color-mix(in srgb, var(--site-accent-dark), black 8%) 0%, $color-bg 70%);
+  padding: 3rem 1.5rem 2rem;
+}
+
+.class-page__hero-inner {
+  max-width: $max-width;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.class-page__icon-wrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.class-page__icon {
+  width: 120px;
+  height: 120px;
+  clip-path: $hex-clip;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.class-page__icon-placeholder {
+  width: 120px;
+  height: 120px;
+  clip-path: $hex-clip;
+  background: var(--cat-color-dim, #{$color-surface-2});
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--site-accent);
+  font-family: $font-display;
+}
+
+.class-page__role-tag {
+  font-size: $font-size-small;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--site-accent);
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.class-page__name {
+  font-size: clamp(1.75rem, 5vw, 3rem);
+  font-family: $font-display;
+  font-weight: 900;
+  color: $color-white;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.class-page__character {
+  color: $color-text-muted;
+  font-size: $font-size-small;
+  margin-top: 0.25rem;
+  strong { color: $color-text; }
+}
+
+.class-page__character-note {
+  font-size: 0.75rem;
+  color: $color-text-muted;
+  font-style: italic;
+  opacity: 0.7;
+}
+
+.class-page__description {
+  margin-top: 0.75rem;
+  color: $color-text;
+  max-width: 600px;
+  font-size: $font-size-large;
+}
+
+// Engineer / Hidden / trait badges on the class's own page - plenty of
+// room here (unlike the classes-grid thumbnail cards), so badges keep
+// their normal size and just wrap onto more lines if needed.
+.class-page__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+
+  .engineer-badge,
+  .hidden-badge,
+  .trait-badge {
+    margin-top: 0;
+  }
+}
+
+.class-page__body {
+  max-width: $max-width;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 4rem;
+}
+
+.class-page__back {
+  max-width: $max-width;
+  margin: 0 auto;
+  padding: 0 1.5rem 3rem;
+
+  a {
+    font-size: $font-size-small;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+}
+
+// ── Section ───────────────────────────────────────────────────────────────
+.class-section {
+  margin-bottom: 3rem;
+}
+
+.class-section__title {
+  font-size: $font-size-xlarge;
+  font-weight: 700;
+  color: $color-white;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+  // Break out of the page column so every section header/divider spans
+  // the full page width, matching Class Cards' full-width treatment.
+  width: min(1560px, calc(100vw - 3rem));
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+// Collapsible variant of .class-section__title, used as a <summary> so a
+// section can be toggled shut (currently just Level Progress - see
+// .level-progress-toggle below). Keeps every bit of the normal title's
+// look (full-width breakout, uppercase, underline) and just adds the same
+// gold reveal-arrow used by the Classes page's own Level Progress toggle
+// and Filters panel (.level-progress-collapse__summary / .classes-filter-collapse__summary).
+.class-section__title.level-progress-toggle__summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+
+  &::-webkit-details-marker { display: none; }
+
+  &::before {
+    content: '\25B8';
+    display: inline-block;
+    flex-shrink: 0;
+    color: $color-gold;
+    transition: transform $transition-fast;
+  }
+}
+
+.level-progress-toggle[open] > .level-progress-toggle__summary::before {
+  transform: rotate(90deg);
+}
+
+.level-progress-toggle__panel {
+  padding-top: 1.25rem;
+}
+
+// ── Abilities Grid ─────────────────────────────────────────────────────────
+.abilities-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.ability-card {
+  display: flex;
+  gap: 1rem;
+  width: 300px;
+  flex-grow: 1;
+  max-width: 400px;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: 1rem;
+
+  &--passive  { border-left: 3px solid $color-text-muted; }
+  &--active   { border-left: 3px solid var(--site-accent); }
+  &--ultimate { border-left: 3px solid $color-gold; }
+
+  // Anchors .ability-card__aka (Engineer classes only) to this card's own
+  // top-right corner instead of the page.
+  &--passive { position: relative; }
+}
+
+// "a.k.a [Engineer]" tag in the Passive card's top-right corner - only
+// rendered for the 3 Engineer classes (Mechanic / Robotics Expert /
+// Architect). Reuses .engineer-badge wholesale (same green pill + hover
+// tooltip already used up in .class-page__badges) just sized down to fit
+// a card corner, the same scale-down .class-card-thumb__badges already
+// uses for the grid thumbnail version.
+.ability-card__aka {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: $color-text-muted;
+
+  .engineer-badge {
+    margin-top: 0;
+    padding: 0.25rem 0.7rem;
+    font-size: 0.78rem;
+    font-style: normal;
+
+    .engineer-badge__tip {
+      font-style: normal;
+    }
+  }
+}
+
+.ability-card__img-wrap {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: $radius-sm;
+  overflow: hidden;
+  background: $color-surface-2;
+
+  img { width: 100%; height: 100%; object-fit: cover; }
+}
+
+.ability-card__img-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: $color-text-muted;
+  font-family: $font-display;
+}
+
+.ability-card__info { flex: 1; min-width: 0; }
+
+.ability-card__type {
+  display: inline-block;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: $color-text-muted;
+  margin-bottom: 0.2rem;
+}
+
+.ability-card--active   .ability-card__type { color: var(--site-accent); }
+.ability-card--ultimate .ability-card__type { color: $color-gold; }
+
+// Active+Ultimate merged card (see class.html: same_ability check) - plain
+// solid gold border-left, same as a normal .ability-card--ultimate. The
+// "Active / Ultimate" dual label already says it's both; the border doesn't
+// need to.
+.ability-card--active.ability-card--ultimate {
+  border-left-color: $color-gold;
+}
+
+.ability-card__type--dual .ability-card__type-active   { color: var(--site-accent); }
+.ability-card__type--dual .ability-card__type-ultimate { color: $color-gold; }
+
+.ability-card__name {
+  font-size: $font-size-medium;
+  font-weight: 700;
+  color: $color-white;
+  margin-bottom: 0.3rem;
+}
+
+.ability-card__desc {
+  font-size: $font-size-small;
+  color: $color-text-muted;
+  line-height: 1.5;
+}
+
+.ability-card__stat {
+  font-size: $font-size-small;
+  color: $color-text-muted;
+  margin-top: 0.3rem;
+  font-style: italic;
+}
+
+// ── Weapons Grid ──────────────────────────────────────────────────────────
+.weapons-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.weapon-card {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 120px;
+  transition: border-color $transition-fast;
+
+  &:hover { border-color: $color-text-muted; }
+}
+
+.weapon-card__img-wrap {
+  width: 80px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $color-surface-2;
+  border-radius: $radius-sm;
+  overflow: hidden;
+
+  img { object-fit: contain; }
+}
+
+.weapon-card__img-placeholder {
+  font-size: 1.5rem;
+  color: $color-text-muted;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.weapon-card__name {
+  font-size: $font-size-small;
+  font-weight: 600;
+  color: $color-text;
+  text-align: center;
+}
+
+// ── Weapons Index Page ───────────────────────────────────────────────────
+// Full weapons listing, 3 per row to mirror the in-game Fabricator WEAPONS
+// grid rather than a plain text table.
+.weapons-index-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+
+  @media (max-width: 700px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (max-width: 440px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.weapon-tile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  transition: border-color $transition-fast;
+
+  &:hover { border-color: var(--site-accent); }
+}
+
+.weapon-tile__num {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.65rem;
+  font-size: $font-size-small;
+  color: $color-text-muted;
+  font-weight: 700;
+}
+
+.weapon-tile__img-wrap {
+  flex: 0 0 auto;
+  width: 110px;
+  height: 66px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $color-surface-2;
+  border-radius: $radius-sm;
+  overflow: hidden;
+
+  // Source art (images/weapons/<slug>.png) is cropped tight to the weapon
+  // silhouette at the same 5:3 ratio as this box, so `cover` fills it
+  // edge-to-edge with no letterboxing - that reads fine at the Fabricator
+  // page's much larger tile size, but at this box's small 110x66 footprint
+  // the source crop's own breathing room (a few px around the gun on a
+  // ~300px-wide source) shrinks to sub-pixel once scaled down, so the
+  // muzzle/stock/grip end up looking flush against the edge. A small fixed
+  // padding here restores a visible margin at this size without touching
+  // the shared source art (which stays edge-filling everywhere else).
+  img { width: 100%; height: 100%; object-fit: cover; padding: 1rem; box-sizing: border-box; }
+}
+
+.weapon-tile__img-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: $color-text-muted;
+}
+
+.weapon-tile__info { min-width: 0; }
+
+.weapon-tile__name {
+  font-size: $font-size-medium;
+  font-weight: 600;
+  color: $color-text;
+  margin: 0 0 0.35rem;
+}
+
+// ── Characters Index Page ────────────────────────────────────────────────
+// Breaks out to full width like .class-section--cards - two faction
+// columns, each an internal grid so several characters sit per row instead
+// of one huge image per row.
+.characters-columns {
+  width: min(1560px, calc(100vw - 3rem));
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 2.5rem;
+
+  @media (max-width: 860px) {
+    grid-template-columns: 1fr;
+    gap: 2.5rem 0;
+  }
+}
+
+.characters-column {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1.25rem 0.85rem;
+  align-content: start;
+}
+
+.characters-column__title {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding-bottom: 0.6rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 2px solid $color-border;
+  color: $color-text;
+
+  &--cog { border-bottom-color: var(--site-accent); }
+  &--swarm { border-bottom-color: $color-stealth; }
+}
+
+.characters-column__count {
+  font-size: $font-size-small;
+  font-weight: 400;
+  color: $color-text-muted;
+}
+
+.character-entry {
+  display: flex;
+  flex-direction: column;
+}
+
+.character-entry__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.character-entry__portrait {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: $color-surface-2;
+  border: 1px solid $color-border;
+  flex: 0 0 auto;
+}
+
+.character-entry__name {
+  font-weight: 600;
+  color: $color-text;
+  font-size: $font-size-small;
+  line-height: 1.2;
+}
+
+.character-entry__body {
+  width: 100%;
+  aspect-ratio: 0.33 / 0.9;
+  object-fit: cover;
+  border-radius: $radius-md;
+  display: block;
+  background: $color-surface-2;
+}
+
+// ── Bundles Index Page ───────────────────────────────────────────────────
+.bundles-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.bundle-entry {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: 0 0.9rem;
+
+  &[open] { border-color: var(--site-accent); }
+}
+
+.bundle-entry__summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 0;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+  color: $color-text;
+
+  &::-webkit-details-marker { display: none; }
+}
+
+.bundle-entry__num {
+  flex: 0 0 auto;
+  width: 1.75rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $color-surface-2;
+  border-radius: 50%;
+  font-size: $font-size-small;
+  color: $color-text-muted;
+}
+
+.bundle-entry__name { flex: 1 1 auto; }
+
+.bundle-entry__count {
+  flex: 0 0 auto;
+  font-size: $font-size-small;
+  font-weight: 400;
+  color: $color-text-muted;
+}
+
+.bundle-entry__items {
+  list-style: none;
+  padding: 0 0 1rem 2.5rem;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.35rem 1rem;
+  color: $color-text-muted;
+  font-size: $font-size-small;
+}
+
+// ── Simple text-list pages (Esports, DLC) ───────────────────────────────
+.simple-item-list {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.5rem 1rem;
+  padding: 0;
+  margin: 0;
+
+  li {
+    background: $color-surface;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+    padding: 0.6rem 0.85rem;
+    color: $color-text;
+    font-size: $font-size-small;
+  }
+}
+
+.dlc-entry {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: 1.25rem 1.5rem;
+  max-width: 70ch;
+}
+
+.dlc-entry__title {
+  margin: 0 0 0.6rem;
+  color: $color-text;
+}
+
+.dlc-entry__desc {
+  color: $color-text-muted;
+  line-height: 1.6;
+  margin: 0;
+}
+
+// ── Class Cards Grid ──────────────────────────────────────────────────────
+// The cards grid breaks out of the page column to use the full width - the
+// section title itself now breaks out via the universal .class-section__title
+// rule above, so only the grid body needs its own breakout here.
+.cards-grid {
+  width: min(1560px, calc(100vw - 3rem));
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));   // 4-5 per row
+  gap: 1rem;
+}
+
+.class-card {
+  position: relative;   // anchors the ::after ring overlay below
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color $transition-fast, transform $transition-fast;
+
+  &:hover {
+    transform: translateY(-2px);   // border keeps its rarity colour (turns vivid via home.scss)
+  }
+
+  // The xref-target flash ring needs to show over the card art too, not
+  // just the info panel - but the art (.class-card__img-wrap) paints its
+  // own opaque background/image right up to the card's edges, which would
+  // completely cover a box-shadow painted on .class-card itself along that
+  // stretch. A ::after pseudo-element is generated as the LAST child, so it
+  // paints on top of everything else in the card (art included) instead of
+  // underneath it, while the card's own `overflow: hidden` still keeps it
+  // clipped neatly to the rounded corners.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    // `inset: 0` sits this INSIDE the 2px border (home.scss sets
+    // border-width: 2px), so `border-radius: inherit` (the OUTER radius)
+    // curves it a touch too wide for its own smaller box - the corner arc
+    // no longer lines up with the border/art clip beneath it, letting a
+    // sliver of the art's corner peek out past the ring. Subtracting the
+    // border width gives the correct, perfectly concentric inner radius.
+    border-radius: calc(#{$radius-md} - 2px);
+    pointer-events: none;
+  }
+}
+
+.class-card__img-wrap {
+  width: 100%;
+  aspect-ratio: 289 / 185;   // native card-art ratio - the whole image shows
+  background: $color-surface-2;
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
+
+  // Source screenshots vary slightly in how tightly they're framed around
+  // the card - a small uniform overscan crops that inconsistency down so
+  // every card's frame reads at roughly the same scale instead of some
+  // looking "zoomed out" with visible padding next to tighter ones.
+  img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.12); transform-origin: center; }
+
+  // Weapon-skin card art was captured at a squarer 304x242, not the usual
+  // ~289x185 the rest of the cards share. Rather than force it into the
+  // wide box (cropping into its border, or letterboxing empty space on the
+  // sides) - resize the box itself to that art's own native ratio, so the
+  // full card always shows edge-to-edge with nothing cropped and nothing
+  // wasted. The text below (name/desc/etc) just flows under whatever
+  // height that ends up being, same as any other card.
+  .class-card--skin & {
+    aspect-ratio: 304 / 242;
+  }
+
+  .class-card--skin & img {
+    object-fit: cover;
+    transform: none;
+  }
+
+  // A handful of card captures came out tightly cropped near-square
+  // (190x180) rather than the usual ~289x185 - same fix as the skin cards
+  // above, just per-card instead of a whole batch. Flagged individually via
+  // `art_fit: contain` in the class's cards: data.
+  .class-card--art-contain & {
+    aspect-ratio: 190 / 180;
+  }
+
+  .class-card--art-contain & img {
+    object-fit: cover;
+    transform: none;
+  }
+
+  // soft fade into the info area below
+  &::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 28px;
+    background: linear-gradient(180deg, rgba($color-surface, 0) 0%, rgba($color-surface, 0.85) 100%);
+    pointer-events: none;
+  }
+
+  // no art yet - collapse back to a slim strip
+  &--empty {
+    aspect-ratio: auto;
+    height: 56px;
+
+    &::after { display: none; }
+  }
+}
+
+.class-card__img-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: $color-border;
+}
+
+.class-card__info {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: 1;
+}
+
+.class-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.class-card__unlock {
+  font-size: 0.65rem;
+  color: $color-text-muted;
+}
+
+.class-card__rarity {
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+
+  &--common    { color: var(--theme-rarity-common); }
+  &--uncommon  { color: var(--theme-rarity-uncommon); }
+  &--rare      { color: var(--theme-rarity-rare); }
+  &--epic      { color: var(--theme-rarity-epic); }
+  &--legendary { color: var(--theme-rarity-legendary); }
+}
+
+.class-card__name {
+  font-size: $font-size-small;
+  font-weight: 700;
+  color: $color-white;
+  line-height: 1.3;
+  min-width: 0;
+}
+
+.class-card__desc {
+  font-size: 0.85rem;
+  color: $color-text-muted;
+  line-height: 1.45;
+}
+
+.class-card__scaling {
+  font-size: 0.7rem;
+  color: $color-gold;
+  line-height: 1.4;
+}
+
+// Fixed footer: cost line always sits directly above the level pips
+.class-card__cost-slot {
+  margin-top: auto;   // pin the cost + pips block to the bottom of the card
+  padding-top: 0.5rem;
+}
+
+.class-card__levels {
+  display: flex;
+  gap: 3px;
+  margin-top: auto;   // push level pips to the bottom of the card
+  padding-top: 0.5rem;
+}
+
+.class-card__cost-slot + .class-card__levels {
+  margin-top: 0;      // cost slot already claimed the flexible space
+  padding-top: 0.25rem;
+}
+
+.class-card__level-pip {
+  flex: 1;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: $color-text-muted;
+  background: $color-surface-2;
+  border: 1px solid $color-border;
+  border-radius: 3px;
+  cursor: default;
+  transition: background $transition-fast, color $transition-fast, border-color $transition-fast;
+
+  &:hover {
+    background: var(--cat-color-dim, rgba(140,109,18,0.15));
+    border-color: var(--cat-color, var(--site-accent));
+    color: $color-white;
+  }
+
+  // Highlighted pip — the level whose values are currently shown
+  &--active {
+    background: var(--cat-color, var(--site-accent));
+    border-color: var(--cat-color, var(--site-accent));
+    color: $color-white;
+    font-weight: 900;
+  }
+}
+
+
+// ── Site theme + category color variables ──────────────────────────────────
+// --site-accent/-dark, --theme-cat-*, --theme-rarity-*, --theme-trait-*-* are
+// ALL rewritten at runtime by #site-theme-switcher (footer.html) from the
+// active theme's _data/themes/<slug>.yml - every other themed color in
+// home.scss/main.scss derives from this one block via var()/color-mix()
+// rather than duplicating a raw hex, so picking a theme re-colors the whole
+// site (categories, card rarity, trait badges, everything) with one batch of
+// property writes. color-mix() (not SCSS's rgba()/lighten()/darken(), which
+// only ever run once at compile time) is what lets all of the derived
+// -dim/-tint/etc values below stay correct after that runtime rewrite. See
+// _data/themes/README.md for the full schema and how to extend it, and
+// variables.scss for why $color-cog-red is still the compile-time name for a
+// gold, not a red.
+:root {
+  --site-accent:      #{$color-cog-red};
+  --site-accent-dark: #{$color-cog-red-dark};
+
+  // Category colors default here to each category's own SCSS variable
+  // (below) - the SAME values every shipped theme's categories: block also
+  // specifies, so nothing changes on first load before JS runs, and nothing
+  // changes at all unless a theme actually customizes its categories.
+  --theme-cat-assault:           #{$color-cat-assault};
+  --theme-cat-assault-dark:      #{$color-cat-assault-dark};
+  --theme-cat-tank:              #{$color-cat-tank};
+  --theme-cat-tank-dark:         #{$color-cat-tank-dark};
+  --theme-cat-support:           #{$color-cat-support};
+  --theme-cat-support-dark:      #{$color-cat-support-dark};
+  --theme-cat-promotional:       #{$color-cat-promotional};
+  --theme-cat-promotional-dark:  #{$color-cat-promotional-dark};
+
+  // Card rarity colors - same "runtime-overridable, seeded from its own
+  // compile-time SCSS variable" pattern as the categories above.
+  --theme-rarity-common:     #{$color-common};
+  --theme-rarity-uncommon:   #{$color-uncommon};
+  --theme-rarity-rare:       #{$color-rare};
+  --theme-rarity-epic:       #{$color-epic};
+  --theme-rarity-legendary:  #{$color-legendary};
+
+  // Trait badge colors - see the big comment on .trait-badge above and on
+  // the $color-trait-* variables in variables.scss for why each trait has
+  // two values (-color/-base) instead of one.
+  --theme-trait-default-color:      #{$color-trait-default-color};
+  --theme-trait-default-base:       #{$color-trait-default-base};
+  --theme-trait-repairing-color:    #{$color-trait-repairing-color};
+  --theme-trait-repairing-base:     #{$color-trait-repairing-base};
+  --theme-trait-ammo-regeneration-color: #{$color-trait-ammo-regen-color};
+  --theme-trait-ammo-regeneration-base:  #{$color-trait-ammo-regen-base};
+  --theme-trait-explosive-ammo-regeneration-color: #{$color-trait-explosive-ammo-regen-color};
+  --theme-trait-explosive-ammo-regeneration-base:  #{$color-trait-explosive-ammo-regen-base};
+  --theme-trait-bleeding-color:     #{$color-trait-bleeding-color};
+  --theme-trait-bleeding-base:      #{$color-trait-bleeding-base};
+  --theme-trait-invisibility-color: #{$color-trait-invisibility-color};
+  --theme-trait-invisibility-base:  #{$color-trait-invisibility-base};
+  --theme-trait-marking-color:      #{$color-trait-marking-color};
+  --theme-trait-marking-base:       #{$color-trait-marking-base};
+  --theme-trait-freeze-color:       #{$color-trait-freeze-color};
+  --theme-trait-freeze-base:        #{$color-trait-freeze-base};
+  --theme-trait-shield-color:       #{$color-trait-shield-color};
+  --theme-trait-shield-base:        #{$color-trait-shield-base};
+  --theme-trait-summon-color:       #{$color-trait-summon-color};
+  --theme-trait-summon-base:        #{$color-trait-summon-base};
+  --theme-trait-melee-color:        #{$color-trait-melee-color};
+  --theme-trait-melee-base:         #{$color-trait-melee-base};
+  --theme-trait-stim-color:         #{$color-trait-stim-color};
+  --theme-trait-stim-base:          #{$color-trait-stim-base};
+
+  // Semantic positive/negative/neutral - see the big comment on
+  // $color-semantic-negative in variables.scss. Deliberately NOT derived
+  // from --site-accent the way most of this block is - "negative" needs to
+  // stay red-ish regardless of which theme is active, not track the brand
+  // color, which is exactly the bug that existed before this block did.
+  --theme-semantic-positive: #{$color-semantic-positive};
+  --theme-semantic-negative: #{$color-semantic-negative};
+  --theme-semantic-neutral:  #{$color-semantic-neutral};
+
+  --cat-color:      var(--site-accent);
+  --cat-color-dark: var(--site-accent-dark);
+  --cat-color-dim:  color-mix(in srgb, var(--site-accent) 15%, transparent);
+}
+
+.class-page--assault,
+.classes-section--assault {
+  --cat-color:      var(--theme-cat-assault);
+  --cat-color-dark: var(--theme-cat-assault-dark);
+  --cat-color-dim:  color-mix(in srgb, var(--theme-cat-assault) 15%, transparent);
+}
+
+.class-page--tank,
+.classes-section--tank {
+  --cat-color:      var(--theme-cat-tank);
+  --cat-color-dark: var(--theme-cat-tank-dark);
+  --cat-color-dim:  color-mix(in srgb, var(--theme-cat-tank) 15%, transparent);
+}
+
+.class-page--support,
+.classes-section--support {
+  --cat-color:      var(--theme-cat-support);
+  --cat-color-dark: var(--theme-cat-support-dark);
+  --cat-color-dim:  color-mix(in srgb, var(--theme-cat-support) 15%, transparent);
+}
+
+.class-page--promotional,
+.classes-section--promotional {
+  --cat-color:      var(--theme-cat-promotional);
+  --cat-color-dark: var(--theme-cat-promotional-dark);
+  --cat-color-dim:  color-mix(in srgb, var(--theme-cat-promotional) 15%, transparent);
+}
+
+// Apply category color to class page accents
+.class-page {
+  .class-page__hero    { background: linear-gradient(180deg, rgba(0,0,0,0) 0%, $color-bg 100%), linear-gradient(135deg, var(--cat-color-dark) 0%, $color-bg 70%); }
+  .class-page__role-tag { color: var(--cat-color); }
+  .class-page__icon-placeholder { color: var(--cat-color); }
+  .class-section__title { border-bottom-color: var(--cat-color); }
+  .class-section__head  { border-bottom-color: var(--cat-color); }
+  .ability-card--active   { border-left-color: var(--cat-color); }
+  .ability-card--active .ability-card__type { color: var(--cat-color); }
+  .class-card-thumb:hover { border-color: var(--cat-color); box-shadow: 0 8px 24px var(--cat-color-dim); }
+  .dpad__pip--filled { background: var(--cat-color); }
+  .dpad__slot   { border-color: var(--cat-color-dark); background: var(--cat-color-dim); }
+}
+
+
+// ── D-pad cross layout ────────────────────────────────────────────────────
+// Widened again (was 230px) so the title + "+X%" boost badge can share
+// one row without wrapping even for a longer name like "Fortification
+// Health" - .dpad__title-row already only wraps the badge below when the
+// row truly doesn't fit (see its own comment), so this is the same fix
+// $slot-size-wide already applies to vertical mode, sized instead for
+// this narrower 3-column cross grid rather than reusing $slot-size-wide
+// outright.
+$slot-size: 300px;
+
+// Was tied 1:1 to $slot-size (a square cell) - decoupled so the cross
+// cards can go wider without also getting taller. Height still isn't hard
+// capped at this - it's a floor, not a ceiling, real height comes from
+// content (see .dpad:not(.dpad--vertical) below for what actually trims
+// that content down).
+$slot-min-height: 150px;
+
+// Row layout (.dpad--vertical below) isn't boxed into the cross grid's
+// fixed 3x3 square cells, so it gets its own, wider card size instead of
+// reusing $slot-size - the extra room is what lets the title + boost badge
+// share one line and the Current/Spend/Max cost table breathe, and it uses
+// noticeably more of the page's own width instead of a narrow row of small
+// cards floating in a sea of empty margin either side.
+$slot-size-wide: 360px;
+
+.dpad {
+  display: grid;
+  grid-template-columns: $slot-size $slot-size $slot-size;
+  grid-template-rows: auto auto auto;
+  gap: 8px;
+  width: fit-content;
+  margin: 0 auto;
+}
+
+// Corner and center cells — invisible spacers
+.dpad__empty { }
+
+.dpad__slot {
+  width: $slot-size;
+  height: 100%;
+  min-height: $slot-min-height;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem 0.5rem 0.6rem;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  text-align: center;
+  transition: border-color $transition-fast;
+
+  &:hover { border-color: var(--cat-color); }
+}
+
+.dpad__icon {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  border-radius: $radius-sm;
+  flex-shrink: 0;
+}
+
+.dpad__icon-placeholder {
+  width: 56px;
+  height: 56px;
+  background: $color-surface-2;
+  border-radius: $radius-sm;
+  border: 1px dashed $color-border;
+  flex-shrink: 0;
+}
+
+.dpad__pips {
+  display: flex;
+  gap: 2px;
+  width: 100%;
+}
+
+.dpad__pip {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.18);
+
+  &--filled { background: var(--cat-color); }
+}
+
+// Boost badge on the LEFT of the title, the pair centered together as a
+// unit in the card (not pinned to the card's own left edge) - card widened
+// further (see $slot-size-wide below) and the name sized up so even the
+// longest perk name ("Chaingun Ammo Regeneration", the longest of the 21
+// distinct names across every class) plus a same-line badge both fit on
+// one line without wrapping.
+.dpad__title-row {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: center;
+  // baseline alignment was letting the badge's own padded pill box (mark's
+  // padding/border-radius throws its text baseline off from a plain line
+  // of text next to it) sit visibly higher/lower than the title - center
+  // lines the two boxes up by their actual rendered height instead.
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+}
+
+// Weapon slots this class genuinely doesn't have (e.g. Mechanic has no
+// grenade) - muted instead of the site's usual kw--unknown red, since red
+// specifically means "real but unconfirmed data", not "doesn't exist".
+.dpad__name--na {
+  color: $color-text-muted;
+  font-weight: 600;
+}
+
+.dpad__name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: $color-text;
+  line-height: 1.25;
+  text-align: left;
+  min-width: 0;
+  flex: 0 1 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// weapon-slot.html's .dpad__name is a direct child of .dpad__slot (Perks'
+// own .dpad__name instead lives inside .dpad__title-row - see above, which
+// is already width:100% in a row flex context, so it isn't affected by
+// this). .dpad__slot uses align-items:center so a bare flex child sizes to
+// its own natural (max-content) width by default - with white-space:nowrap
+// preventing wrapping, a long weapon name's box just grew as wide as the
+// unclipped text needed, so overflow:hidden/text-overflow:ellipsis above
+// never had anything to actually clip; the name visibly spilled past the
+// card's edges instead of truncating (see screenshot report - "text is
+// coming out"). align-self:stretch constrains the box to the slot's real
+// width instead.
+//
+// The full name should always be readable rather than "Markza Mk 1
+// Marksm..." (explicitly asked for), so nowrap/ellipsis from the base
+// rule above are turned back off here - text wraps onto a 2nd line
+// within the card's fixed width instead, and .dpad__slot's own
+// height:auto (see .dpad.dpad--vertical .dpad__slot / the cross-mode
+// $slot-min-height floor) already lets the card grow to fit it, so
+// nothing is ever cut off.
+.dpad__slot > .dpad__name {
+  align-self: stretch;
+  width: 100%;
+  text-align: center;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+// Green "+X%" boost badge, left of the title - same kw--cheap treatment as
+// Fabricator's own perk-rank boost tags.
+.dpad__boost {
+  flex: 0 0 auto;
+}
+
+.dpad__boost-mark {
+  font-size: 0.8rem;
+}
+
+.dpad__desc {
+  display: none; // too small to fit — shown on hover via title attr if needed
+}
+
+// Per-rank value + cost line inside each perk slot
+.dpad__value-slot {
+  width: 100%;
+  text-align: center;
+  margin-top: auto; // push value + pips to the bottom edge
+}
+
+// Current / Spend cost table (see perk-slot.html - Max was dropped, it
+// never actually changed card to card or rank to rank). The Energy icon
+// gets its own column on the left, merged (rowspan) across both the
+// header and value rows instead of repeating per column. Numbers sized up
+// well past $font-size-medium (Fabricator's own Energy cost size) since
+// this table is the slot's main content by itself now, in a card with the
+// room to spare for it.
+.dpad__cost-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+
+  th, td {
+    padding: 0;
+    text-align: center;
+  }
+
+  th {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: $color-text-muted;
+    padding-bottom: 0.2rem;
+    white-space: nowrap;
+  }
+
+  td {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: $color-text;
+    white-space: nowrap;
+  }
+}
+
+// Vector mask icon (see .fab-tile__icon--bolt) rendered at a size big
+// enough that its diagonal edges anti-alias cleanly instead of looking
+// jagged/pixelated the way it did shrunk down inside the old, much
+// smaller value line. No divider next to it - Current and Spend are the
+// two things it actually makes sense to visually separate (see
+// .dpad__cost-current below), not the icon from "the numbers" generically.
+.dpad__cost-icon {
+  width: 2.4em;
+  vertical-align: middle;
+  font-size: 1.6rem;
+  padding-right: 0.3em !important;
+}
+
+// Divider between Current and Spend - a class rather than an nth-child
+// rule because the icon's rowspan makes "Current" the 2nd child in the
+// header row but the 1st child in the value row underneath it, so a
+// position-based selector can't target both consistently. Spend, on the
+// other hand, is always the LAST cell in its row either way, so that half
+// of the matching gap can just use :last-child.
+.dpad__cost-current {
+  border-right: 1px solid rgba(255,255,255,0.18);
+  padding-right: 0.5em !important;
+  padding-left: 0.5em !important;
+}
+
+// Current's own number (not its header label) - same $color-gold the
+// Total box's own number uses right below this table, instead of an
+// unrelated one-off orange, so the two numbers read as the same kind of
+// value.
+td.dpad__cost-current {
+  color: $color-gold;
+}
+
+.dpad__cost-table th:last-child,
+.dpad__cost-table td:last-child {
+  padding-left: 0.5em !important;
+}
+
+// Cross mode's cards are wider than they used to be ($slot-size, see
+// above) but still only about 2/3 of $slot-size-wide (360px), which is
+// what the cost table's 1.3rem numbers and 2.4em icon column above were
+// actually sized for (see that block's own comment - "a card with the
+// room to spare for it" describes the WIDE card, not this one). A real
+// 5-digit Spend value like "24,250" (the actual max once a perk hits rank
+// 10) still doesn't fit at the full size without running into Current's
+// own number. Scoped to cross mode only via :not(.dpad--vertical) - the
+// wide vertical cards already have plenty of room and shouldn't shrink to
+// match.
+.dpad:not(.dpad--vertical) {
+  .dpad__cost-icon { width: 1.8em; }
+
+  .dpad__cost-table td { font-size: 0.88rem; }
+
+  .dpad__cost-current {
+    padding-right: 0.35em !important;
+    padding-left: 0.35em !important;
+  }
+
+  .dpad__cost-table th:last-child,
+  .dpad__cost-table td:last-child {
+    padding-left: 0.35em !important;
+  }
+
+  // Trims the card's actual (content-driven) height, not just the
+  // min-height floor above - between the title, icon, cost table, 2 rows
+  // of rank pips, and the No Perk button, cross-mode cards were stacking
+  // up well past $slot-min-height regardless of what that variable said.
+  // Icon shrinks (it's decorative here, most are still placeholder
+  // squares - see images/perks/README.md) and every gap/padding tightens
+  // a bit; nothing here touches font sizes that carry real information
+  // (rank numbers, cost values, perk name). Nested under .dpad__slot
+  // itself, not left bare in this block - a bare gap/padding here would
+  // land on the .dpad grid container instead (it also matches
+  // .dpad:not(.dpad--vertical)), not the card.
+  .dpad__slot {
+    gap: 0.35rem;
+    padding: 0.5rem 0.5rem 0.4rem;
+  }
+
+  .dpad__icon,
+  .dpad__icon-placeholder { width: 40px; height: 40px; }
+
+  .dpad__rank-pip { padding: 3px 0; }
+
+  .dpad__no-perk { padding: 3px 0; margin-top: 1px; }
+}
+
+// Weapons cross-mode cards only ever hold an icon + weapon name (no
+// title+badge row or cost table the way Perks needs $slot-size's full
+// 300px for), so they can run noticeably smaller and sit closer together.
+// Scoped to #weapons-dpad specifically, not .dpad:not(.dpad--vertical) -
+// that would also shrink Perks' cross cards, which still need the wider
+// size for their content.
+$weapon-slot-size: 190px;
+$weapon-slot-min-height: 90px;
+
+#weapons-dpad:not(.dpad--vertical) {
+  grid-template-columns: $weapon-slot-size $weapon-slot-size $weapon-slot-size;
+  gap: 4px;
+
+  .dpad__slot {
+    width: $weapon-slot-size;
+    min-height: $weapon-slot-min-height;
+  }
+}
+
+// Rank pips (1-10) inside each perk slot
+.dpad__rank-pips {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 3px;
+  width: 100%;
+}
+
+.dpad .dpad__rank-pip {
+  min-width: 0;
+  padding: 5px 0;
+  font-size: 0.78rem;
+  line-height: 1;
+}
+
+// "No Perk" - rank 0, the default state. Sits under the 1-10 pips as a
+// full-width pip and behaves exactly like them (same data-level wiring),
+// showing "No Perk" with a 0 Energy cost when selected.
+.dpad .dpad__no-perk {
+  width: 100%;
+  margin-top: 3px;
+  padding: 5px 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+// Center cell: total Energy for the selected ranks
+.dpad__slot--center {
+  justify-content: center;
+  gap: 0.35rem;
+  background: $color-surface-2;
+}
+
+.dpad__rank-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: $color-text-muted;
+}
+
+// Weapon slot labels ("Weapon Slot 1" / "Grenade" / "Pistol") sized to
+// match .dpad__name (0.95rem) below them - scoped to #weapons-dpad so
+// Perks' "Total" cell (the only other .dpad__rank-label user) keeps its
+// smaller size.
+#weapons-dpad .dpad__rank-label {
+  font-size: 0.95rem;
+}
+
+.dpad__total {
+  font-size: 1.35rem;
+  line-height: 1;
+
+  strong { color: $color-gold; }
+}
+
+.dpad__total-note {
+  font-size: 0.72rem;
+  color: $color-text-muted;
+  text-align: center;
+}
+
+// Section header row with the layout toggle button
+.class-section__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+  // Break out to full width itself, same as the universal .class-section__title
+  // rule - so its nested title (below) is reset back to normal flow instead
+  // of doubling up the breakout.
+  width: min(1560px, calc(100vw - 3rem));
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+
+  .class-section__title {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+    width: auto;
+    position: static;
+    left: auto;
+    transform: none;
+  }
+}
+
+.perk-order-toggle {
+  font: inherit;
+  font-size: $font-size-small;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: $color-text-muted;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  transition: color $transition-fast, border-color $transition-fast;
+
+  &:hover {
+    color: $color-white;
+    border-color: var(--cat-color, var(--site-accent));
+  }
+}
+
+// Row perk order (default): East | West | North | South, total below.
+// Breaks out of the page's normal 1200px content column the same way
+// .class-section__title and Class Cards already do (width capped at
+// 1560px, centered on the VIEWPORT via left:50%/translateX(-50%) rather
+// than staying boxed into whatever's left after .class-page__body's own
+// padding) - at $slot-size-wide, 4 cards + gaps only needs ~1300px, so
+// this is what actually lets them use that extra room instead of wrapping
+// to 3-and-1 or getting clipped against the narrower column.
+// Compound selector (not just .dpad--vertical) so every rule in this block
+// - including the breakpoints below - beats the OLDER, still-present
+// .dpad/.dpad__slot mobile rules further down this file on specificity
+// (0,2,0 vs their 0,1,0) instead of depending on source order. Both
+// classes are always present together on the element (see the toggle JS
+// in _layouts/class.html), so this changes nothing about when it applies.
+.dpad.dpad--vertical {
+  // Used to be flex-wrap with each card fixed at $slot-size-wide (360px) -
+  // 4 of those plus gaps needs ~1464px, but this breakout's own width caps
+  // out at 100vw-3rem, so anywhere the viewport was narrower than ~1512px
+  // (i.e. most laptop screens, not just phones) the 4th card had nowhere
+  // to go but its own orphaned row underneath the other 3. A CSS grid with
+  // a FIXED column count doesn't have that failure mode - explicit
+  // grid-template-columns always creates exactly that many columns and
+  // shrinks them together to fit, it never silently drops a column just
+  // because content got a little too wide to fit right at $slot-size-wide.
+  // The breakpoints below still step down to 2 then 1 column, but that's
+  // now a deliberate, even 2x2/1-per-row layout at a chosen width, not an
+  // accidental leftover-card orphan at an arbitrary one.
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
+  // width:fit-content here would size against the PARENT's (still-boxed
+  // 1152px) content width, not this breakout's own max-width - max-width
+  // only clamps a width down, it can't make fit-content's own shrink-to-fit
+  // calculation look past its containing block to begin with. Same
+  // width value .class-section__title itself uses instead, for the same
+  // breakout: cards still end up centered either way, just inside a wider
+  // box that can actually fit them on one row.
+  width: min(1560px, calc(100vw - 3rem));
+  margin: 0 auto;
+  gap: 8px;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+
+  .dpad__empty { display: none; }
+
+  // Base .dpad__slot sets height:100% + min-height:$slot-size for the fixed
+  // 3x3 cross grid, where every cell IS that height already. Here each
+  // slot instead fills its own grid column - width:auto (not a fixed
+  // $slot-size-wide) lets it shrink with the column, max-width keeps it
+  // from stretching past $slot-size-wide on very wide screens, and
+  // margin:0 auto centers it if its column ever ends up wider than that
+  // cap. height:auto + align-items:stretch (above) still makes every card
+  // in a row match its tallest sibling, same as before.
+  .dpad__slot {
+    width: auto;
+    max-width: $slot-size-wide;
+    height: auto;
+    min-height: 0;
+    margin: 0 auto;
+  }
+
+  // order is respected by grid auto-placement exactly like flex, so this
+  // still reorders the 4 cards into East | West | North | South without
+  // touching the DOM.
+  .dpad__slot--right  { order: 1; } // East
+  .dpad__slot--left   { order: 2; } // West
+  .dpad__slot--up     { order: 3; } // North
+  .dpad__slot--down   { order: 4; } // South
+
+  // Total drops to its own full-width row below the perks
+  .dpad__slot--center {
+    order: 5;
+    grid-column: 1 / -1;
+    width: 100%;
+    max-width: none;
+    min-height: 0;
+    padding: 0.6rem 0.5rem;
+  }
+
+  // Below this, 4 columns would squeeze each card under ~200px (title +
+  // Current/Spend table + 5-wide rank-pip row all start fighting for
+  // space) - step down to a clean 2x2 instead of letting minmax(0, 1fr)
+  // keep shrinking them into an unreadable sliver.
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  // Matches the existing .dpad (cross mode) mobile breakpoint just below -
+  // same width this breaks down to a single column, one card per row.
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Weapons row/list mode: unlike Perks (title+badge row, cost table, rank
+// pips), a weapon card is only an icon + name, so the same wide 1560px
+// breakout + $slot-size-wide (360px) columns Perks needs leave weapon
+// cards swimming in mostly-empty columns with big gaps between them (see
+// screenshot report - "keep them more together"). An ID selector already
+// beats the shared .dpad.dpad--vertical rule above regardless of source
+// order, so this only affects #weapons-dpad - Perks' row layout is
+// untouched. Cards get their own tighter fixed width instead of
+// $slot-size-wide and sit outside the full-viewport breakout
+// (width:fit-content, no left:50%/translateX) so they hug each other
+// instead of centering inside 4 wide columns. Icon grows too (also
+// requested) since there's no cost table competing for the card's
+// vertical space here.
+$weapon-slot-size-row: 220px;
+$weapon-icon-size-row: 84px;
+
+#weapons-dpad.dpad--vertical {
+  width: fit-content;
+  max-width: 100%;
+  left: auto;
+  transform: none;
+  grid-template-columns: repeat(4, $weapon-slot-size-row);
+  gap: 12px;
+
+  .dpad__slot {
+    width: $weapon-slot-size-row;
+    max-width: $weapon-slot-size-row;
+  }
+
+  .dpad__icon,
+  .dpad__icon-placeholder {
+    width: $weapon-icon-size-row;
+    height: $weapon-icon-size-row;
+  }
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, $weapon-slot-size-row);
+  }
+
+  @media (max-width: 500px) {
+    grid-template-columns: $weapon-slot-size-row;
+  }
+}
+
+@media (max-width: 500px) {
+  $slot-sm: 130px;
+
+  .dpad {
+    grid-template-columns: $slot-sm $slot-sm $slot-sm;
+    grid-template-rows: $slot-sm $slot-sm $slot-sm;
+    gap: 5px;
+  }
+
+  .dpad__slot { width: $slot-sm; height: $slot-sm; padding: 0.5rem 0.375rem; }
+  .dpad__icon, .dpad__icon-placeholder { width: 36px; height: 36px; }
+  .dpad__name { font-size: 0.6rem; }
+}
+
+// ── Cross-reference links: any mention of a class, weapon, or fortification
+// that jumps to its entry elsewhere on the site.
+.xref-link {
+  color: $color-gold;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-decoration: underline;
+  text-decoration-color: rgba($color-gold, 0.6);
+  text-underline-offset: 2px;
+  transition: color $transition-fast, text-decoration-color $transition-fast;
+
+  &:hover,
+  &:focus {
+    color: lighten($color-gold, 12%);
+    text-decoration-color: lighten($color-gold, 12%);
+  }
+}
+
+// Variant used for cross-links to another CLASS (or that class's own
+// ability) - colored to match that class's own category instead of the
+// default gold, via an inline --cat-color/-dark/-dim override so it reads
+// correctly regardless of what page it's shown on.
+.xref-link--cat {
+  color: var(--cat-color, $color-gold);
+  text-decoration-color: var(--cat-color, rgba($color-gold, 0.6));
+
+  &:hover,
+  &:focus {
+    filter: brightness(1.2);
+  }
+}
+
+// Short text tooltip that pops up when hovering a bare [[class-slug]] or
+// [[active:slug]]/[[passive:slug]]/[[ultimate:slug]] reference - so a class
+// or perk/ability name mentioned in prose is always both a working link
+// *and* a hover explainer, not just one or the other. Same CSS-only
+// hover/focus reveal as .xref-link--card below, just a text box instead of
+// an image.
+.xref-link--tip {
+  position: relative;
+}
+
+.xref-tip {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 10px);
+  transform: translate(-50%, -4px);
+  width: max-content;
+  max-width: min(280px, calc(100vw - 2rem));
+  overflow-wrap: break-word;
+  padding: 0.7rem 0.9rem;
+  font-size: $font-size-small;
+  line-height: 1.5;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  text-align: left;
+  color: $color-text;
+  background: linear-gradient(180deg, lighten($color-surface-2, 3%), $color-surface-2);
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity $transition-fast, transform $transition-fast;
+  z-index: 25;
+
+  &__icon {
+    display: block;
+    width: 36px;
+    height: 36px;
+    margin-bottom: 0.4rem;
+    object-fit: contain;
+  }
+
+  // Wider variant that hosts a .class-mini-preview (icon + category + name +
+  // description) instead of a plain text line - same shared styling the
+  // Classes page's own hover preview uses, just dropped into this simpler
+  // CSS-only hover/focus tooltip instead of that page's JS-clamped one.
+  &--class {
+    width: 260px;
+    max-width: calc(100vw - 2rem);
+    padding: 0.65rem 0.75rem;
+  }
+}
+
+.xref-link--tip:hover .xref-tip,
+.xref-link--tip:focus .xref-tip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  pointer-events: auto;
+}
+
+// Card-art thumbnail that pops up when hovering a [[card:slug]] reference -
+// either standalone inline in prose, or nested *inside* another badge
+// tooltip (a nested hover, since the outer tooltip already has to be
+// open/hovered for this inline link to be reachable at all). Opens downward
+// like every other preview on the site (used to open upward by default,
+// which worked for the nested case but ran the panel up over whatever text
+// was above it - e.g. Jack's Optimizer card mention on the Gamemodes page -
+// for the far more common standalone case).
+.xref-link--card {
+  position: relative;
+}
+
+.xref-card-preview {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 10px);
+  transform: translate(-50%, -4px);
+  width: 220px;
+  padding: 4px;
+  background: $color-surface-2;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity $transition-fast, transform $transition-fast;
+  z-index: 25;
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 2px;
+  }
+
+  &__desc {
+    display: block;
+    padding: 0.5rem 0.35rem 0.25rem;
+    font-size: $font-size-small;
+    line-height: 1.5;
+    font-weight: 400;
+    letter-spacing: normal;
+    text-transform: none;
+    text-align: left;
+    color: $color-text;
+  }
+}
+
+.xref-link--card:hover .xref-card-preview,
+.xref-link--card:focus .xref-card-preview {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+// The element an .xref-link scrolls to - offset so the sticky header doesn't
+// cover it, and a brief highlight flash so it's obvious what was jumped to.
+.xref-target {
+  scroll-margin-top: $header-height + 12px;
+}
+
+// `:target` is a CSS-only fallback (fires immediately on hash match, even
+// with JS disabled) - but the site also drives this via a JS-toggled class
+// (see the xref-target script in footer.html) so the flash's timer starts
+// only once we've actually finished scrolling to the element, not the
+// instant the hash matches. Without that, a long smooth-scrolled jump (or
+// one that first has to pop open a collapsed <details>) can easily take
+// longer than the animation, so the flash would finish fading before the
+// element ever comes into view.
+// .class-card is excluded here - its ring runs on its ::after overlay
+// instead (see the .class-card block above), so it can paint over the
+// card art instead of getting hidden underneath it.
+.xref-target:target:not(.class-card),
+.xref-target--flash:not(.class-card) {
+  animation: xref-flash 3s ease-out;
+}
+
+.class-card:target::after,
+.class-card.xref-target--flash::after {
+  animation: xref-flash 3s ease-out;
+}
+
+// An outline draws outside the border box - fine on plain elements, but
+// several xref-targets (e.g. .class-card) have `overflow: hidden` on
+// themselves (to clip their own header art/thumbnail to rounded corners),
+// which also clips anything painted past their edge, outline included, so
+// the flash silently never showed on those. An INSET box-shadow paints
+// just inside the border box instead, so it survives overflow:hidden and
+// still reads as a highlight ring on every other target too.
+@keyframes xref-flash {
+  0%   { box-shadow: inset 0 0 0 6px $color-gold; }
+  70%  { box-shadow: inset 0 0 0 6px $color-gold; }
+  100% { box-shadow: inset 0 0 0 6px rgba($color-gold, 0); }
+}
+
+// ── Level-panel stack: sizes to the tallest panel so the pip/rank selector
+// below it never shifts position when a shorter or taller level is shown.
+// Used by Fabricator fortification panels, class card levels/costs, and
+// perk rank values - anything that swaps content via [data-level-panel].
+.level-stack {
+  display: grid;
+
+  > [data-level-panel] {
+    grid-area: 1 / 1;
+    visibility: visible;
+  }
+
+  > [data-level-panel][data-level-hidden] {
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+// ── Keyword highlights ────────────────────────────────────────────────────
+mark.kw {
+  background: none;
+  font-weight: 700;
+  border-radius: 3px;
+  padding: 0.05em 0.3em;
+  font-size: 0.9em;
+
+  &.kw--ability {
+    color: var(--cat-color, var(--site-accent));
+    background: var(--cat-color-dim, rgba(140,109,18,0.15));
+  }
+
+  &.kw--passive {
+    color: $color-text-muted;
+    background: rgba(136,136,153,0.15);
+  }
+
+  &.kw--value {
+    color: var(--theme-semantic-neutral);
+    background: color-mix(in srgb, var(--theme-semantic-neutral) 15%, transparent);
+  }
+
+  &.kw--cheap {
+    color: var(--theme-semantic-positive);
+    background: color-mix(in srgb, var(--theme-semantic-positive) 15%, transparent);
+  }
+
+  &.kw--expensive {
+    color: var(--theme-semantic-negative);
+    background: color-mix(in srgb, var(--theme-semantic-negative) 15%, transparent);
+  }
+}
+
+// ── Responsive ────────────────────────────────────────────────────────────
+@media (max-width: 640px) {
+  .classes-grid {
+    gap: 0.875rem;
+  }
+
+  .cards-grid {
+    width: 100%;
+    left: auto;
+    transform: none;
+  }
+
+  .class-section__title,
+  .class-section__head {
+    width: 100%;
+    left: auto;
+    transform: none;
+  }
+
+  .class-page__hero-inner {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .ability-card {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+@import "home";
+@import "list";

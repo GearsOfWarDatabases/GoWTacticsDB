@@ -1,0 +1,11 @@
+# ── Weapons ────────────────────────────────────────────────────────────────
+# Shown by weapons/index.html. Images: images/weapons/<slug>.png. `badge` is the small type tag; `desc` is
+# optional and can use {value} and [[section:slug]] (see _includes/render-desc.html).
+# EXAMPLE ENTRIES: replace them with your game's.
+
+list:
+  - { name: "Lancer Assault Rifle", slug: "lancer",  badge: "Assault Rifle", desc: "Chainsaw bayonet. {60} rounds." }
+  - { name: "Gnasher Shotgun",      slug: "gnasher", badge: "Shotgun" }
+  - { name: "Snub Pistol",          slug: "snub",    badge: "Pistol" }
+  - { name: "Longshot Sniper Rifle", slug: "longshot", badge: "Sniper" }
+  - { name: "Boomshot",             slug: "boomshot", badge: "Explosive", desc: "Power weapon." }

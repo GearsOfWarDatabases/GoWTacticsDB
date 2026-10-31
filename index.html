@@ -1,0 +1,50 @@
+---
+title:
+---
+<div class="home">
+  <section class="home-hero">
+    <h1 class="home-hero__title">{{ site.game.name }} <em>Database</em></h1>
+    <p class="home-hero__tagline">{{ site.tagline }}</p>
+    {%- if site.credits %}
+    <p class="home-hero__credits">Made by:
+      {% if site.credits.xbox %}<span class="home-hero__platform">Xbox</span>
+      <a href="{{ site.credits.xbox.url }}">{{ site.credits.xbox.gamertag }}</a>{% endif %}
+      {% if site.credits.xbox and site.credits.github %}<span class="home-hero__sep">/</span>{% endif %}
+      {% if site.credits.github %}<span class="home-hero__platform">GitHub</span>
+      <a href="{{ site.credits.github.url }}">{{ site.credits.github.name }}
+        ({{ site.credits.github.user }})</a>{% endif %}
+    </p>
+    {%- endif %}
+    {%- if site.work_in_progress and site.work_in_progress != "" %}
+    <p class="home-hero__wip">{{ site.work_in_progress }}
+      {% if site.todo_url and site.todo_url != "" %}<a href="{{ site.todo_url }}">See the TODO list</a>.{% endif %}</p>
+    {%- endif %}
+  </section>
+
+  {%- for group in site.nav_groups %}
+  <section class="home-group">
+    <div class="home-group__header">
+      <h2 class="home-group__title">{{ group.name }}</h2>
+    </div>
+    <div class="home-grid">
+      {%- for section in group.sections %}
+      {%- assign section_page = site.pages | where: "url", section.url | first %}
+      {%- if section_page.coming_soon %}
+      <span class="section-card section-card--soon" tabindex="0">
+        <span class="section-card__icon">{{ section.icon }}</span>
+        <span class="section-card__name">{{ section.title }}</span>
+        <span class="section-card__desc">{{ section.desc }}</span>
+        <span class="soon-tip">Coming soon</span>
+      </span>
+      {%- else %}
+      <a class="section-card" href="{{ section.url | relative_url }}">
+        <span class="section-card__icon">{{ section.icon }}</span>
+        <span class="section-card__name">{{ section.title }}</span>
+        <span class="section-card__desc">{{ section.desc }}</span>
+      </a>
+      {%- endif %}
+      {%- endfor %}
+    </div>
+  </section>
+  {%- endfor %}
+</div>
